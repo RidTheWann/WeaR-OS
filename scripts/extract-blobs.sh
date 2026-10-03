@@ -6,7 +6,14 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-ANDROID_DIR="${ANDROID_DIR:-$ROOT_DIR/..}"
+
+if [[ -f "$ROOT_DIR/../build/envsetup.sh" ]]; then
+    ANDROID_DIR="${ANDROID_DIR:-$ROOT_DIR/..}"
+elif [[ -f "$ROOT_DIR/../../build/envsetup.sh" ]]; then
+    ANDROID_DIR="${ANDROID_DIR:-$ROOT_DIR/../..}"
+else
+    ANDROID_DIR="${ANDROID_DIR:-$ROOT_DIR/..}"
+fi
 
 command -v adb >/dev/null 2>&1 || {
     echo "ERROR: adb is not installed or not in PATH." >&2
