@@ -1,8 +1,8 @@
 # WeaR OS Source Provenance
 
-## Primary stack — 23.2-current
+## Primary stack — 23.1-snapboss
 
-The current bring-up profile uses this exact device/platform selection:
+The primary bring-up profile uses the exact Snapboss device tree supplied for this project:
 
 | Component | Path | Revision |
 | --- | --- | --- |
@@ -18,9 +18,9 @@ The current bring-up profile uses this exact device/platform selection:
 
 The LineageOS 23.2 manifest branch currently resolves to eabe68377217a88c81fa933db0136ea4146ff369.
 
-## Legacy stack — 23.1-snapboss
+## Experimental stack — 23.2
 
-The supplied Snapboss device tree remains reproducible at:
+The separately maintained 23.2 profile uses the newer community device tree:
 
     snapboss/device_xiaomi_duchamp
     50f301982df14af45af137ba87c565a459a7e65c
@@ -29,7 +29,7 @@ Its base LineageOS 23.1 manifest branch currently resolves to:
 
     7d408383a8f199ba9a72e8a3b4314c6d848b459c
 
-The 23.1 profile is retained for regression comparison.
+The 23.1 Snapboss profile is the primary source-of-truth.
 
 ## Reproducibility rules
 
