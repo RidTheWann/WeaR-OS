@@ -1,13 +1,22 @@
 #!/usr/bin/env bash
 # SPDX-License-Identifier: Apache-2.0
 #
-# Build the unmodified LineageOS duchamp baseline used as the first WeaR OS milestone.
+# Build a duchamp baseline or the WeaR product.
 
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-ANDROID_DIR="${ANDROID_DIR:-$ROOT_DIR/..}"
+
+if [[ -f "$ROOT_DIR/../build/envsetup.sh" ]]; then
+    ANDROID_DIR="${ANDROID_DIR:-$ROOT_DIR/..}"
+elif [[ -f "$ROOT_DIR/../../build/envsetup.sh" ]]; then
+    ANDROID_DIR="${ANDROID_DIR:-$ROOT_DIR/../..}"
+else
+    ANDROID_DIR="${ANDROID_DIR:-$ROOT_DIR/..}"
+fi
+
 JOBS="${JOBS:-4}"
+BUILD_PRODUCT="${BUILD_PRODUCT:-lineage_duchamp-userdebug}"
 
 cd "$ANDROID_DIR"
 
@@ -17,15 +26,11 @@ cd "$ANDROID_DIR"
     exit 1
 }
 
-# The first milestone deliberately builds the upstream product. Product customization
-# is introduced only after the device baseline is boot-verified.
 source build/envsetup.sh
+lunch "$BUILD_PRODUCT"
 
-lunch lineage_duchamp-userdebug
-
-echo "==> Building LineageOS duchamp baseline"
+echo "==> Building $BUILD_PRODUCT"
 echo "    jobs: $JOBS"
-echo "    product: lineage_duchamp-userdebug"
 
 mka bacon -j"$JOBS"
 
