@@ -50,6 +50,12 @@ verify_repo() {
     echo "OK       $path @ $actual"
 }
 
+WEAR_REF="${WEAR_REF:-}"
+
+if [[ -n "$WEAR_REF" ]]; then
+    verify_repo "vendor/wear" "$WEAR_REF"
+fi
+
 verify_repo "device/xiaomi/duchamp" "50f301982df14af45af137ba87c565a459a7e65c"
 verify_repo "device/xiaomi/duchamp-kernel" "a2fd5cb97fd76a4eb61fcfe11af03ae74bd57416"
 verify_repo "vendor/xiaomi/duchamp" "38c572c3914d90970dce609fef9186cd6decf1db"
