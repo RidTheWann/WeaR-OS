@@ -64,6 +64,14 @@ Run repository-only checks with:
 bash scripts/validate.sh
 ~~~
 
+## GitHub Actions
+
+Repository validation runs automatically on pushes and pull requests.
+
+Full ROM compilation is available through the manual **WeaR OS ROM Build** workflow on a dedicated self-hosted runner labeled `wearos-build`.
+
+See `docs/github-actions.md` for runner setup, source pinning, incremental builds, release publishing, and security requirements.
+
 ## Bring-up gates
 
 A release is not considered ready merely because it compiles. The current engineering gates are:
