@@ -1,5 +1,18 @@
+//
+// Copyright (C) 2024 The LineageOS Project
+//
 // SPDX-License-Identifier: Apache-2.0
 //
-// WeaR OS project namespace. The repository is synced into vendor/wear.
 
-soong_namespace {}
+soong_namespace {
+    imports: [
+        "hardware/xiaomi",
+    ],
+}
+
+install_symlink {
+    name: "vendor_mdota_symlink",
+    vendor: true,
+    installed_location: "etc/mdota",
+    symlink_target: "/mnt/vendor/mdota",
+}
