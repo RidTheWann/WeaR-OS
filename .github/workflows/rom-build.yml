@@ -54,9 +54,9 @@ jobs:
       - name: Validate inputs
         shell: bash
         env:
-          LINEAGE_REF: \${{ inputs.lineage_ref }}
-          WEAR_REF: \${{ inputs.wear_ref }}
-          JOBS: \${{ inputs.jobs }}
+          LINEAGE_REF: ${{ inputs.lineage_ref }}
+          WEAR_REF: ${{ inputs.wear_ref }}
+          JOBS: ${{ inputs.jobs }}
         run: |
           set -euo pipefail
           [[ "$LINEAGE_REF" =~ ^[0-9a-fA-F]{40}$ ]] || {
@@ -90,7 +90,7 @@ jobs:
       - name: Initialize LineageOS source
         shell: bash
         env:
-          LINEAGE_REF: \${{ inputs.lineage_ref }}
+          LINEAGE_REF: ${{ inputs.lineage_ref }}
         run: |
           set -euo pipefail
           export ANDROID_DIR="$GITHUB_WORKSPACE/../android-source"
@@ -105,7 +105,7 @@ jobs:
       - name: Install immutable local manifest
         shell: bash
         env:
-          WEAR_REF: \${{ inputs.wear_ref }}
+          WEAR_REF: ${{ inputs.wear_ref }}
         run: |
           set -euo pipefail
           mkdir -p "$ANDROID_DIR/.repo/local_manifests"
@@ -174,7 +174,7 @@ jobs:
       - name: Sync source
         shell: bash
         env:
-          JOBS: \${{ inputs.jobs }}
+          JOBS: ${{ inputs.jobs }}
         run: |
           set -euo pipefail
           cd "$ANDROID_DIR"
@@ -183,7 +183,7 @@ jobs:
       - name: Verify resolved source
         shell: bash
         env:
-          WEAR_REF: \${{ inputs.wear_ref }}
+          WEAR_REF: ${{ inputs.wear_ref }}
         run: |
           set -euo pipefail
           cd "$ANDROID_DIR"
@@ -206,15 +206,15 @@ jobs:
           ccache -o compression=true
 
       - name: Clean build output
-        if: \${{ inputs.clean }}
+        if: ${{ inputs.clean }}
         shell: bash
         run: rm -rf "$ANDROID_DIR/out"
 
       - name: Build wear_duchamp
         shell: bash
         env:
-          JOBS: \${{ inputs.jobs }}
-          BUILD_TYPE: \${{ inputs.build_type }}
+          JOBS: ${{ inputs.jobs }}
+          BUILD_TYPE: ${{ inputs.build_type }}
         run: |
           set -euo pipefail
           cd "$ANDROID_DIR"
@@ -251,11 +251,11 @@ jobs:
       - name: Upload ROM artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: wear-duchamp-\${{ github.run_number }}
+          name: wear-duchamp-${{ github.run_number }}
           path: |
-            \${{ env.ANDROID_DIR }}/wear-artifacts/*.zip
-            \${{ env.ANDROID_DIR }}/wear-artifacts/SHA256SUMS
-            \${{ env.ANDROID_DIR }}/wear-artifacts/source-manifest.xml
+            ${{ env.ANDROID_DIR }}/wear-artifacts/*.zip
+            ${{ env.ANDROID_DIR }}/wear-artifacts/SHA256SUMS
+            ${{ env.ANDROID_DIR }}/wear-artifacts/source-manifest.xml
           if-no-files-found: error
           retention-days: 7
 
