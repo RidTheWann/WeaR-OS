@@ -59,6 +59,13 @@
         remote="github"
         revision="6300a4e30757d5810d62b2df0cff973ec438a70f" />
 
+    <!-- Explicit dependency: duchamp/device.mk inherits the QTI vibrator product file. -->
+    <project
+        path="vendor/qcom/opensource/vibrator"
+        name="LineageOS/android_vendor_qcom_opensource_vibrator"
+        remote="github"
+        revision="ff107c42acda49f0609c30e155d1dd9d17b814b9" />
+
     <!-- Required Aperture patch source documented by mt6897-devs. -->
     <project
         path="packages/apps/Aperture"
