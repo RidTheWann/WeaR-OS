@@ -6,6 +6,10 @@
 # This prevents unrelated maintainer/branding/fingerprint settings from being
 # inherited into WeaR OS.
 
+# The duchamp device configuration uses WITH_GMS to select the stock-compatible
+# EROFS + Virtual A/B path. This flag does not add Google applications by itself.
+WITH_GMS := true
+
 # AOSP product foundations
 $(call inherit-product, $(SRC_TARGET_DIR)/product/core_64_bit_only.mk)
 $(call inherit-product, $(SRC_TARGET_DIR)/product/full_base_telephony.mk)
@@ -15,10 +19,6 @@ $(call inherit-product, device/xiaomi/duchamp/device.mk)
 
 # LineageOS common services/features
 $(call inherit-product, vendor/lineage/config/common_full_phone.mk)
-
-# The duchamp device configuration uses WITH_GMS to select the stock-compatible
-# EROFS + Virtual A/B path. This flag does not add Google applications by itself.
-WITH_GMS := true
 
 PRODUCT_NAME := wear_duchamp
 PRODUCT_DEVICE := duchamp
