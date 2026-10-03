@@ -111,7 +111,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          for tool in git repo git-lfs python3 curl zip unzip rsync ccache sha256sum; do
+          for tool in git repo git-lfs python3 curl zip unzip rsync ccache sha256sum gh; do
             command -v "$tool" >/dev/null 2>&1 || {
               echo "ERROR: required tool not found: $tool" >&2
               exit 1
@@ -132,7 +132,7 @@ jobs:
       - name: Synchronize Android source
         shell: bash
         env:
-          ANDROID_DIR: ${{ runner.workspace }}/android-source
+          ANDROID_DIR: ${{ github.workspace }}/../android-source
           STACK: ${{ inputs.stack }}
           LINEAGE_REF: ${{ inputs.lineage_ref }}
           WEAR_REF: ${{ inputs.wear_ref }}
@@ -143,7 +143,7 @@ jobs:
       - name: Verify synchronized source
         shell: bash
         env:
-          ANDROID_DIR: ${{ runner.workspace }}/android-source
+          ANDROID_DIR: ${{ github.workspace }}/../android-source
           STACK: ${{ inputs.stack }}
           LINEAGE_REF: ${{ inputs.lineage_ref }}
           WEAR_REF: ${{ inputs.wear_ref }}
@@ -153,13 +153,13 @@ jobs:
         if: ${{ inputs.clean_build }}
         shell: bash
         env:
-          ANDROID_DIR: ${{ runner.workspace }}/android-source
+          ANDROID_DIR: ${{ github.workspace }}/../android-source
         run: rm -rf "$ANDROID_DIR/out"
 
       - name: Build ROM
         shell: bash
         env:
-          ANDROID_DIR: ${{ runner.workspace }}/android-source
+          ANDROID_DIR: ${{ github.workspace }}/../android-source
           BUILD_PRODUCT: ${{ inputs.build_product }}
           JOBS: ${{ inputs.jobs }}
         run: bash scripts/build.sh
@@ -167,7 +167,7 @@ jobs:
       - name: Collect ROM artifacts
         shell: bash
         env:
-          ANDROID_DIR: ${{ runner.workspace }}/android-source
+          ANDROID_DIR: ${{ github.workspace }}/../android-source
           BUILD_PRODUCT: ${{ inputs.build_product }}
           STACK: ${{ inputs.stack }}
           LINEAGE_REF: ${{ inputs.lineage_ref }}
@@ -179,9 +179,9 @@ jobs:
         with:
           name: wear-os-build-metadata-${{ github.run_number }}
           path: |
-            ${{ runner.workspace }}/android-source/wear-artifacts/build-info.txt
-            ${{ runner.workspace }}/android-source/wear-artifacts/SHA256SUMS
-            ${{ runner.workspace }}/android-source/wear-artifacts/source-manifest.xml
+            ${{ github.workspace }}/../android-source/wear-artifacts/build-info.txt
+            ${{ github.workspace }}/../android-source/wear-artifacts/SHA256SUMS
+            ${{ github.workspace }}/../android-source/wear-artifacts/source-manifest.xml
           retention-days: 7
           if-no-files-found: error
 
@@ -190,7 +190,7 @@ jobs:
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
-          ANDROID_DIR: ${{ runner.workspace }}/android-source
+          ANDROID_DIR: ${{ github.workspace }}/../android-source
           RELEASE_TAG: ${{ inputs.release_tag }}
           BUILD_PRODUCT: ${{ inputs.build_product }}
         run: |
@@ -227,10 +227,10 @@ jobs:
             echo ""
             echo "| Setting | Value |"
             echo "|---|---|"
-            echo "| Stack | `$STACK` |"
-            echo "| Build product | `$BUILD_PRODUCT` |"
-            echo "| Lineage ref | `$LINEAGE_REF` |"
-            echo "| WeaR ref | `$WEAR_REF` |"
+            echo "| Stack | $STACK |"
+            echo "| Build product | $BUILD_PRODUCT |"
+            echo "| Lineage ref | $LINEAGE_REF |"
+            echo "| WeaR ref | $WEAR_REF |"
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Show ccache statistics
