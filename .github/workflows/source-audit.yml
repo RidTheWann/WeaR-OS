@@ -61,6 +61,13 @@ jobs:
                 echo "Unexpected device-tree modification: $path" >&2
                 exit 1
               }
+
+              source_mode="$(git -C /tmp/reference ls-files -s -- "$path" | awk '{print $1}')"
+              target_mode="$(git ls-files -s -- "$path" | awk '{print $1}')"
+              [[ "$source_mode" == "$target_mode" ]] || {
+                echo "Unexpected device-tree mode change: $path ($source_mode -> $target_mode)" >&2
+                exit 1
+              }
             fi
           done
 
