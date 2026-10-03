@@ -20,6 +20,14 @@ fi
 PRODUCT_DIR="$ANDROID_DIR/out/target/product/duchamp"
 ARTIFACT_DIR="$ANDROID_DIR/wear-artifacts"
 
+# Prefer the exact values persisted by sync.sh when workflow inputs were left
+# blank or when the build resumed from an earlier synchronized source tree.
+SOURCE_ENV="$ANDROID_DIR/.repo/local_manifests/wear-source.env"
+if [[ -f "$SOURCE_ENV" ]]; then
+    # shellcheck disable=SC1090
+    source "$SOURCE_ENV"
+fi
+
 [[ -d "$PRODUCT_DIR" ]] || {
     echo "ERROR: product output directory does not exist: $PRODUCT_DIR" >&2
     exit 1
