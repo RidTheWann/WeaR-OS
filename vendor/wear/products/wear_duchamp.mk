@@ -19,7 +19,7 @@ WEAR_OS_VERSION := 0.1.0-alpha
 WEAR_OS_BUILD_TYPE := UNOFFICIAL
 WEAR_OS_DEVICE := duchamp
 
-PRODUCT_PROPERTY_OVERRIDES += \
-    ro.wearos.name=WeaR OS \
+PRODUCT_SYSTEM_PROPERTIES += \
+    ro.wearos.name=WeaR_OS \
     ro.wearos.version=$(WEAR_OS_VERSION) \
     ro.wearos.build_type=$(WEAR_OS_BUILD_TYPE)
