@@ -2,84 +2,137 @@
 
 Audit date: 2026-10-03
 
-## Current state
+## Executive status
 
-The repository is now a valid project layer rather than a placeholder repository. It contains a repo manifest, product registration, source verification, build helpers, extraction tooling, documentation, and CI validation.
+The repository has moved from a placeholder into a structured ROM project layer. Product registration, source manifests, validation tooling, documentation, licensing, and CI are present.
+
+The project is **not yet a boot-verified ROM**. The main engineering risk is dependency compatibility between the supplied Snapboss LineageOS 23.1 device tree and the newer public duchamp kernel/vendor revisions.
 
 ## Findings and remediation
 
-### A1 — Product registration location
+### A1 — Product registration
 
-**Finding:** AndroidProducts.mk was nested under vendor/wear/products.
+The WeaR product is registered through root-level `AndroidProducts.mk` and `Android.bp`, with the actual product definition in `vendor/wear/products/wear_duchamp.mk`.
 
-**Risk:** Current Android build-system conventions place AndroidProducts.mk at the project root, while the product makefile can live in a subdirectory.
-
-**Remediation:** AndroidProducts.mk and Android.bp are now at the WeaR project root. The product makefile remains at vendor/wear/products/wear_duchamp.mk.
+This mirrors the Android/Lineage product-discovery model: the build system collects product definitions from `AndroidProducts.mk` files and resolves their `PRODUCT_MAKEFILES` entries. The root placement keeps discovery deterministic. 
 
 ### A2 — Upstream product contamination
 
-**Finding:** The first product definition inherited device/xiaomi/duchamp/lineage_duchamp.mk, which also carries upstream project-specific identity settings.
+The initial implementation inherited `device/xiaomi/duchamp/lineage_duchamp.mk`, which also contained project-specific maintainer, blur, fingerprint, and branding values.
 
-**Risk:** Unrelated maintainer/branding/fingerprint configuration can leak into a custom ROM.
+WeaR now inherits:
 
-**Remediation:** WeaR now inherits the AOSP product foundations, duchamp device.mk, and Lineage common configuration directly. WeaR owns its product identity.
+- AOSP 64-bit phone foundations
+- `device/xiaomi/duchamp/device.mk`
+- LineageOS common phone configuration
 
-### A3 — Filesystem-mode dependency
+and owns its own `PRODUCT_NAME`, model, build identity, and future feature layer.
 
-**Finding:** The duchamp device.mk uses WITH_GMS as a selector for its EROFS + Virtual A/B configuration path.
+This avoids silently inheriting unrelated upstream ROM policy.
 
-**Remediation:** WeaR explicitly sets WITH_GMS=true and documents that this flag is being used as a device configuration selector, not as a Google-app inclusion switch.
+### A3 — WITH_GMS evaluation order
+
+The duchamp `device.mk` evaluates `WITH_GMS` while it is being included. In the supplied tree, this flag selects the EROFS + Virtual A/B path when true.
+
+WeaR therefore defines `WITH_GMS := true` **before** inheriting `device.mk`.
+
+This does not by itself add a Google package set; Lineage's GMS handling is conditional on the corresponding partner-GMS source being present.
 
 ### A4 — Source compatibility boundary
 
-**Finding:** The supplied Snapboss device tree is an older LineageOS 23.1 snapshot, while the public duchamp kernel/vendor projects also expose newer 23.2-era revisions.
+The user-supplied Snapboss tree is a LineageOS 23.1 snapshot. The public duchamp ecosystem also exposes newer 23.0/23.2-era kernel and vendor branches and later device-tree revisions.
 
-**Risk:** Build-time ABI/API or runtime VINTF/module mismatches are possible.
+The current manifest therefore pins exact revisions instead of following branch tips automatically.
 
-**Remediation:** Dependency revisions are locked to exact commits and the condition is documented. The project does not claim hardware compatibility until compilation and device validation pass.
+Compatibility is explicitly unverified until the exact stack:
 
-**Next engineering action:** Build the exact locked stack. If incompatibilities occur, resolve the dependency set as a coordinated change rather than updating one repository independently.
+1. compiles,
+2. boots,
+3. passes hardware validation.
+
+A build failure should be debugged as a coordinated dependency-set problem, not by updating one repository at random.
 
 ### A5 — Reproducibility
 
-**Finding:** The development manifest references the WeaR repository's main branch.
+All device/platform dependencies are pinned to immutable commits.
 
-**Risk:** A future sync can change the WeaR layer without changing the Android source revision.
+The WeaR project itself is a development dependency and the manifest template uses `main`. `scripts/sync.sh` accepts `WEAR_REF` and renders that exact revision into the local manifest.
 
-**Remediation:** Development keeps main for rapid iteration. Release procedures must pin the WeaR repository to the exact release commit before publishing a build.
+Recommended release pattern:
 
-### A6 — Validation coverage
+    WEAR_REF=<immutable WeaR commit SHA> bash scripts/sync.sh
 
-**Finding:** The original repository had no automated syntax or structure checks.
+This makes the final source state reproducible.
 
-**Remediation:** scripts/validate.sh and GitHub Actions now validate shell syntax, manifest XML, product registration, and required manifest references on every push and pull request.
+### A6 — Source integrity
 
-### A7 — Proprietary source handling
+`scripts/verify-source.sh` checks:
 
-**Finding:** Device functionality depends on proprietary Xiaomi/MediaTek components.
+- exact Git commit IDs
+- presence of all expected Git projects
+- clean worktrees
+- optional exact WeaR revision through `WEAR_REF`
 
-**Remediation:** The WeaR repository does not redistribute proprietary blobs. Extraction remains an external build step using an authorized source.
+This catches accidental local edits and dependency drift before a release build.
 
-## Release gate
+### A7 — Repository validation
 
-A WeaR OS release is not considered ready until all of the following are true:
+`scripts/validate.sh` checks shell syntax, manifest XML, product registration, and required manifest entries. GitHub Actions runs the validation script on pushes and pull requests.
 
-- source validation passes
-- exact dependency revisions are recorded
-- proprietary extraction succeeds
-- baseline build succeeds
-- WeaR build succeeds
-- first boot succeeds
-- hardware validation passes
-- OTA packaging and signing are tested
-- a clean rollback path exists
+This is intentionally lightweight: it validates repository structure without pretending that GitHub CI can replace a full Android build and device boot test.
 
-## Explicit non-goals for Alpha 0.1
+### A8 — Security patch provenance
+
+The supplied Snapboss tree advertises an older boot/vendor security-patch level than the latest public duchamp tree.
+
+WeaR must not simply change the property to a newer date. The correct approach is to update the device/vendor source from a matching firmware base and then verify the resulting image and runtime patch levels.
+
+### A9 — Release signing
+
+The supplied device tree uses AOSP test AVB keys during development.
+
+Test keys are suitable for local bring-up only. A public release needs project-controlled signing keys kept outside the repository, with AVB, target-files, and OTA signing performed in a controlled release environment.
+
+### A10 — Proprietary blobs
+
+The device depends on Xiaomi/MediaTek proprietary components.
+
+WeaR does not redistribute those blobs in its own repository. Extraction remains an external build step from an authorized device/firmware source.
+
+### A11 — GitHub language classification
+
+The Android repo layout places WeaR source under `vendor/wear`, which GitHub Linguist may otherwise classify as vendored.
+
+`.gitattributes` explicitly marks `vendor/wear/**` as non-vendored. This only changes GitHub language statistics; it does not alter the Android build graph.
+
+### A12 — Product identity and fingerprint
+
+WeaR intentionally does not inherit the Snapboss fingerprint override from its `lineage_duchamp.mk`.
+
+A production fingerprint must be selected only after deciding the ROM's compatibility/certification strategy and validating the resulting properties. We should not copy a stock fingerprint merely to make the build appear certified.
+
+## Current release gate
+
+A WeaR OS build is not release-ready until all of the following pass:
+
+- source validation
+- proprietary extraction/completeness
+- baseline compilation
+- WeaR compilation
+- first boot
+- hardware validation
+- OTA generation
+- AVB/OTA signing with release keys
+- clean-install and upgrade testing
+- rollback testing
+- source-manifest and checksum publication
+
+## Alpha 0.1 non-goals
 
 - kernel overclocking
 - undocumented scheduler hacks
-- aggressive thermal disabling
+- disabling thermal safety mechanisms
 - fake benchmark optimizations
 - Play Integrity bypass logic
 
-Those can be evaluated later only with evidence, hardware validation, and a clearly documented trade-off.
+Performance engineering begins only after the hardware baseline is stable and measurable.
