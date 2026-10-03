@@ -1,3 +1,2 @@
-# WeaR's own source is stored under vendor/wear for Android repo layout.
-# Do not classify it as third-party vendored code in GitHub Linguist.
-/vendor/wear/** linguist-vendored=false
+patches/** linguist-vendored=false
+scripts/** linguist-vendored=false

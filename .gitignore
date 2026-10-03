@@ -1,22 +1,14 @@
 # Android build output
 out/
-
-# Repo metadata and local manifests
 .repo/
-
-# Host/editor files
+*.log
+wear-artifacts/
 .idea/
 .vscode/
 *.swp
 .DS_Store
-
-# Local credentials / keys
 *.pem
-*.key
 *.pk8
+*.key
 keys/
 private_keys/
-
-# Local logs and test captures
-*.log
-logs/
