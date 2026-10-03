@@ -15,7 +15,7 @@ else
     ANDROID_DIR="${ANDROID_DIR:-$ROOT_DIR/..}"
 fi
 
-LINEAGE_BRANCH="${LINEAGE_BRANCH:-lineage-23.1}"
+LINEAGE_REF="${LINEAGE_REF:-lineage-23.1}"
 JOBS="${JOBS:-4}"
 WEAR_REF="${WEAR_REF:-main}"
 
@@ -27,7 +27,7 @@ command -v repo >/dev/null 2>&1 || {
 cd "$ANDROID_DIR"
 
 repo init -u https://github.com/LineageOS/android.git \
-    -b "$LINEAGE_BRANCH" \
+    -b "$LINEAGE_REF" \
     --git-lfs
 
 mkdir -p .repo/local_manifests
@@ -68,7 +68,7 @@ if [[ "${FORCE_SYNC:-0}" == "1" ]]; then
     SYNC_ARGS+=("--force-sync")
 fi
 
-echo "==> Syncing LineageOS $LINEAGE_BRANCH with WeaR ref $WEAR_REF"
+echo "==> Syncing LineageOS $LINEAGE_REF with WeaR ref $WEAR_REF"
 repo sync "${SYNC_ARGS[@]}"
 
 echo
