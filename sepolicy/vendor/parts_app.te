@@ -1,0 +1,79 @@
+type parts_app, domain;
+typeattribute parts_app mlstrustedsubject;
+
+app_domain(parts_app)
+
+binder_use(parts_app)
+
+# Allow parts_app to find *_service
+allow parts_app {
+  activity_service
+  activity_task_service
+  app_api_service
+  audioserver_service
+  audio_service
+  autofill_service
+  cameraserver_service
+  content_capture_service
+  device_state_service
+  drmserver_service
+  game_service
+  gpu_service
+  hint_service
+  media_session_service
+  mediaextractor_service
+  mediametrics_service
+  mediaserver_service
+  netstats_service
+  permission_checker_service
+  sensorservice_service
+  statusbar_service
+  surfaceflinger_service
+  thermal_service
+  trust_service
+  voiceinteraction_service
+}:service_manager find;
+
+allow parts_app system_app_data_file:dir create_dir_perms;
+allow parts_app system_app_data_file:file create_file_perms;
+allow parts_app system_app_data_file:{ file lnk_file } create_file_perms;
+
+binder_call(parts_app, gpuservice)
+
+allow parts_app sysfs_leds:dir search;
+allow parts_app {
+  cgroup
+  sysfs_leds
+  sysfs_thermal
+}:{ file lnk_file } rw_file_perms;
+
+get_prop(parts_app, settingslib_prop)
+
+allow parts_app init:unix_stream_socket connectto;
+set_prop(parts_app, exported_system_prop)
+set_prop(parts_app, system_prop)
+
+allow parts_app sysfs_therm:dir search;
+allow parts_app sysfs_therm:file { write };
+allow parts_app sysfs_therm:file { getattr open read };
+allow parts_app sysfs_power_supply:file rw_file_perms;
+allow parts_app sysfs_power_supply:dir search;
+allow parts_app sysfs_power_supply:file { write setattr };
+allow parts_app self:netlink_kobject_uevent_socket { bind create read setopt };;
+allow parts_app sysfs_devices_system_cpu:file rw_file_perms;
+
+allow parts_app vendor_sysfs_corecontrol:dir search;
+allow parts_app vendor_sysfs_corecontrol:file { getattr open read write };
+
+allow parts_app sysfs_therm:dir search;
+allow parts_app sysfs_therm:file { write };
+allow parts_app sysfs_therm:file { getattr open read };
+
+binder_call(parts_app, vendor_hal_displayfeature_xiaomi_default)
+allow parts_app hal_touchfeature_xiaomi_service:service_manager find;
+binder_call(parts_app, hal_touchfeature_xiaomi)
+allow parts_app vendor_sysfs_htsr:file rw_file_perms;
+allow parts_app hal_touchfeature_xiaomi_service:service_manager find;
+binder_call(parts_app, hal_touchfeature_xiaomi_service)
+binder_call(parts_app, hal_touchfeature_xiaomi_default)
+allow parts_app init:unix_stream_socket connectto;
