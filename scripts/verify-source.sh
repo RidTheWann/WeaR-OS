@@ -1,8 +1,7 @@
 #!/usr/bin/env bash
 # SPDX-License-Identifier: Apache-2.0
 #
-# Verify exact upstream revisions declared by the WeaR bring-up manifest.
-# Run this before a release build, after repo sync has completed.
+# Verify the project revisions declared by the active local manifest.
 
 set -euo pipefail
 
@@ -18,24 +17,42 @@ fi
 
 cd "$ANDROID_DIR"
 
+MANIFEST_FILE=".repo/local_manifests/wear-duchamp.xml"
+
+[[ -f "$MANIFEST_FILE" ]] || {
+    echo "MISSING  $MANIFEST_FILE" >&2
+    echo "Run scripts/sync.sh first." >&2
+    exit 1
+}
+
 failures=0
 
 verify_repo() {
     local path="$1"
     local expected="$2"
     local actual
-    local git_dir
 
-    if ! git_dir="$(git -C "$path" rev-parse --git-dir 2>/dev/null)"; then
+    if ! git -C "$path" rev-parse --git-dir >/dev/null 2>&1; then
         echo "MISSING  $path"
         failures=$((failures + 1))
         return
     fi
 
     actual="$(git -C "$path" rev-parse HEAD)"
-    if [[ "$actual" != "$expected" ]]; then
+
+    # A revision in the local manifest may be a branch, tag, or SHA.
+    # Resolve it in the target repo so the same verifier works for development
+    # and release manifests.
+    local resolved
+    if ! resolved="$(git -C "$path" rev-parse "$expected^{commit}" 2>/dev/null)"; then
+        echo "UNRESOLVED $path @ $expected"
+        failures=$((failures + 1))
+        return
+    fi
+
+    if [[ "$actual" != "$resolved" ]]; then
         echo "MISMATCH $path"
-        echo "         expected: $expected"
+        echo "         expected: $resolved (manifest: $expected)"
         echo "         actual:   $actual"
         failures=$((failures + 1))
         return
@@ -50,29 +67,47 @@ verify_repo() {
     echo "OK       $path @ $actual"
 }
 
+# Validate the Lineage manifest repository itself when LINEAGE_REF is immutable.
 LINEAGE_REF="${LINEAGE_REF:-}"
-if [[ -n "$LINEAGE_REF" && "$LINEAGE_REF" =~ ^[0-9a-fA-F]{40}$ ]]; then
-    if [[ ! -d ".repo/manifests" ]]; then
+if [[ -n "$LINEAGE_REF" ]]; then
+    if ! git -C ".repo/manifests" rev-parse --git-dir >/dev/null 2>&1; then
         echo "MISSING  .repo/manifests"
         failures=$((failures + 1))
     else
-        verify_repo ".repo/manifests" "$LINEAGE_REF"
+        resolved_manifest="$(git -C ".repo/manifests" rev-parse "$LINEAGE_REF^{commit}" 2>/dev/null || true)"
+        actual_manifest="$(git -C ".repo/manifests" rev-parse HEAD 2>/dev/null || true)"
+        if [[ -z "$resolved_manifest" || "$actual_manifest" != "$resolved_manifest" ]]; then
+            echo "MISMATCH .repo/manifests"
+            echo "         expected: $LINEAGE_REF -> $resolved_manifest"
+            echo "         actual:   $actual_manifest"
+            failures=$((failures + 1))
+        else
+            echo "OK       .repo/manifests @ $actual_manifest"
+        fi
     fi
 fi
 
-WEAR_REF="${WEAR_REF:-}"
-if [[ -n "$WEAR_REF" ]]; then
-    verify_repo "vendor/wear" "$WEAR_REF"
-fi
+# The local manifest is authoritative for device-specific projects.
+python3 - "$MANIFEST_FILE" <<'PY' > /tmp/wear-projects.tsv
+import sys
+import xml.etree.ElementTree as ET
 
-verify_repo "device/xiaomi/duchamp" "50f301982df14af45af137ba87c565a459a7e65c"
-verify_repo "device/xiaomi/duchamp-kernel" "a2fd5cb97fd76a4eb61fcfe11af03ae74bd57416"
-verify_repo "vendor/xiaomi/duchamp" "38c572c3914d90970dce609fef9186cd6decf1db"
-verify_repo "device/mediatek/sepolicy_vndr" "1b12039600b2ad9b1a435682bc8f61fd1f0b111d"
-verify_repo "hardware/mediatek" "68f9be72a32bca66e7c63d69e9739b18f13c8b48"
-verify_repo "hardware/xiaomi" "37fe5e4a6acbce4ca3d91e059fd7bd60a0890540"
-verify_repo "hardware/dolby" "6300a4e30757d5810d62b2df0cff973ec438a70f"
-verify_repo "packages/apps/Aperture" "a4c34aa57ed56de60f29349a1e6d20cf816ca15"
+root = ET.parse(sys.argv[1]).getroot()
+for project in root.findall("project"):
+    path = project.get("path")
+    revision = project.get("revision")
+    name = project.get("name")
+    if not path or not revision:
+        raise SystemExit(f"Invalid project entry: {project.attrib}")
+    print(f"{path}\t{revision}\t{name or ''}")
+PY
+
+while IFS=$'\t' read -r path revision name; do
+    [[ -n "$path" ]] || continue
+    verify_repo "$path" "$revision"
+done < /tmp/wear-projects.tsv
+
+rm -f /tmp/wear-projects.tsv
 
 if (( failures != 0 )); then
     echo
