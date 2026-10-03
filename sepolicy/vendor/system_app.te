@@ -1,0 +1,4 @@
+allow system_app sysfs_thermal:file write;
+allow system_app sysfs_power_supply:file { write setattr };
+allow system_app vendor_sysfs_htsr:file { rw_file_perms getattr };
+
