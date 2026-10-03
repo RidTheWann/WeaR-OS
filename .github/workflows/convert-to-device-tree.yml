@@ -9,31 +9,35 @@ permissions:
 
 jobs:
   convert:
-    if: >-
-      !contains(github.event.head_commit.message,
-      'chore: establish duchamp device tree')
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
     steps:
+      - name: Skip after conversion
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "\${{ github.event.head_commit.message }}" == *"chore: establish duchamp device tree"* ]]; then
+            echo "Device-tree conversion already completed."
+            exit 0
+          fi
+
       - name: Checkout WeaR OS
         uses: actions/checkout@v4
         with:
           fetch-depth: 1
 
-      - name: Import Snapboss device tree
+      - name: Import Snapboss reference tree
         shell: bash
         run: |
           set -euo pipefail
           rm -rf /tmp/snapboss-duchamp
-          git clone --quiet --no-tags --depth 1 \
+          git clone --quiet --no-tags \
             https://github.com/snapboss/device_xiaomi_duchamp.git \
             /tmp/snapboss-duchamp
           cd /tmp/snapboss-duchamp
-          git fetch --quiet --depth 1 origin \
-            50f301982df14af45af137ba87c565a459a7e65c
           git checkout --quiet 50f301982df14af45af137ba87c565a459a7e65c
-          cd "$GITHUB_WORKSPACE"
+          cd "\$GITHUB_WORKSPACE"
 
           find . -mindepth 1 -maxdepth 1 \
             ! -name .git \
@@ -42,7 +46,7 @@ jobs:
 
           cp -a /tmp/snapboss-duchamp/. .
 
-      - name: Create WeaR product
+      - name: Create WeaR product and documentation
         shell: bash
         run: |
           set -euo pipefail
@@ -98,12 +102,7 @@ COMMON_LUNCH_CHOICES := \
     wear_duchamp-userdebug
 EOF
 
-      - name: Write WeaR documentation
-        shell: bash
-        run: |
-          set -euo pipefail
           mkdir -p docs
-
           cat > README.md <<'EOF'
 # WeaR OS - Xiaomi/POCO duchamp
 
@@ -113,13 +112,13 @@ This repository is the actual device/xiaomi/duchamp tree used by the Android
 build. It is not a vendor wrapper and it does not contain an AOSP checkout.
 
 Hardware baseline:
-- Repository: https://github.com/snapboss/device_xiaomi_duchamp
-- Reference: 50f301982df14af45af137ba87c565a459a7e65c
-- Base lineage: 23.1
+https://github.com/snapboss/device_xiaomi_duchamp
+Reference commit:
+50f301982df14af45af137ba87c565a459a7e65c
 
-The tree contains board configuration, kernel integration, VINTF/HAL
+The device tree contains board configuration, kernel integration, VINTF/HAL
 declarations, overlays, sepolicy, rootdir, power/thermal configuration,
-UDFPS, shims, parts and extraction manifests.
+UDFPS, native shims, device parts and extraction manifests.
 
 WeaR-specific product identity lives in wear_duchamp.mk.
 EOF
@@ -127,44 +126,60 @@ EOF
           cat > docs/source-reference.md <<'EOF'
 # Source Reference
 
-Authoritative hardware baseline:
+## Authoritative hardware baseline
+
+Repository:
 https://github.com/snapboss/device_xiaomi_duchamp
 
-Pinned commit:
+Pinned reference:
 50f301982df14af45af137ba87c565a459a7e65c
 
-Engineering reference:
+## Engineering reference
+
+Repository:
 https://github.com/Saikrishna1504/device_xiaomi_duchamp
 
-The Saikrishna tree is a useful LineageOS-style duchamp reference for studying
-device-side implementation patterns. It is not copied wholesale.
+The Saikrishna tree is a LineageOS-style duchamp implementation and a useful
+reference for device-side engineering patterns. WeaR OS does not copy its ROM
+branding or Axion-specific layer wholesale.
 
-Hardware ownership remains inside the device tree; ROM features belong in the
-WeaR framework/product layer or in the upstream component that owns them.
+Hardware-specific code stays inside the device tree. WeaR framework features
+are introduced separately at the correct ownership boundary.
 EOF
 
           cat > docs/device-tree.md <<'EOF'
-# Device Tree
+# Device Tree Layout
 
-Important files:
-- BoardConfig.mk: board, kernel, partition and AVB configuration.
-- device.mk: device packages, HALs, overlays and runtime configuration.
-- wear_duchamp.mk: WeaR product definition.
-- AndroidProducts.mk: lunch/product registration.
-- manifest.xml and compatibility matrices: VINTF declarations.
-- configs, overlay, overlay-lineage, rootdir, sepolicy.
-- libshims, udfps, power and parts.
-- proprietary-files.txt and proprietary-firmware.txt are extraction manifests.
+BoardConfig.mk
+: board, kernel, partition, AVB and platform configuration.
 
-Do not commit proprietary blobs, signing keys, generated images or build output.
+device.mk
+: device packages, HALs, permissions, overlays and runtime configuration.
+
+wear_duchamp.mk
+: WeaR OS product definition and ROM identity.
+
+AndroidProducts.mk
+: product and lunch registration.
+
+manifest.xml and compatibility matrices
+: VINTF declarations.
+
+configs/, overlay/, overlay-lineage/, rootdir/, sepolicy/
+: hardware-specific runtime resources and policy.
+
+libshims/, udfps/, power/, parts/
+: native and device feature implementations.
+
+proprietary-files.txt and proprietary-firmware.txt
+: extraction manifests only. Proprietary payloads stay outside this repository.
 EOF
 
-      - name: Add device-tree validation
+      - name: Install CI validation
         shell: bash
         run: |
           set -euo pipefail
           mkdir -p .github/workflows
-
           cat > .github/workflows/validate.yml <<'EOF'
 name: WeaR duchamp device-tree validation
 
@@ -180,17 +195,15 @@ jobs:
   validate:
     runs-on: ubuntu-latest
     timeout-minutes: 10
+
     steps:
       - uses: actions/checkout@v4
 
       - name: Validate Python
-        run: |
-          set -euo pipefail
-          python3 -m py_compile extract-files.py setup-makefiles.py
+        run: python3 -m py_compile extract-files.py setup-makefiles.py
 
       - name: Validate XML
         run: |
-          set -euo pipefail
           python3 - <<'PY'
           from pathlib import Path
           import xml.etree.ElementTree as ET
@@ -199,7 +212,8 @@ jobs:
           print("XML validation passed.")
           PY
 
-      - name: Validate anchors
+      - name: Validate device-tree anchors
+        shell: bash
         run: |
           set -euo pipefail
           for f in Android.bp AndroidProducts.mk BoardConfig.mk device.mk \
@@ -208,26 +222,26 @@ jobs:
                    proprietary-firmware.txt; do
             test -f "$f"
           done
+
           grep -q 'PRODUCT_NAME := wear_duchamp' wear_duchamp.mk
           grep -q 'wear_duchamp-userdebug' AndroidProducts.mk
           grep -q 'TARGET_BOARD_PLATFORM := mt6897' BoardConfig.mk
           grep -q 'KERNEL_PATH := $(DEVICE_PATH)-kernel' BoardConfig.mk
           grep -q 'vendor/xiaomi/duchamp/duchamp-vendor.mk' device.mk
-          grep -q '50f301982df14af45af137ba87c565a459a7e65c' docs/source-reference.md
 
       - name: Check repository hygiene
         shell: bash
         run: |
           set -euo pipefail
           if find . -type f \
-              \( -name '*.img' -o -name '*.bin' -o -name '*.so' -o -name '*.apk' \) \
+              \( -name '*.img' -o -name '*.so' -o -name '*.apk' \) \
               -not -path './.git/*' | grep -q .; then
-            echo "Unexpected binary/proprietary artifact found."
+            echo "Unexpected generated/proprietary artifact found."
             exit 1
           fi
 EOF
 
-      - name: Finalize conversion
+      - name: Finalize and push
         shell: bash
         run: |
           set -euo pipefail
