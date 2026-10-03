@@ -7,10 +7,10 @@ on:
         description: Source stack
         required: true
         type: choice
-        default: 23.2-current
+        default: 23.1-snapboss
         options:
-          - 23.2-current
           - 23.1-snapboss
+          - 23.2-experimental
       build_product:
         description: Product to build
         required: true
@@ -81,12 +81,12 @@ jobs:
             echo "jobs must be an integer from 1 to 64" >&2
             exit 1
           }
-          if [[ "${{ inputs.stack }}" == "23.1-snapboss" && "${{ inputs.build_product }}" == "wear_duchamp-userdebug" ]]; then
-            echo "WARNING: 23.1 Snapboss is the legacy compatibility profile; release publishing should use 23.2-current." >&2
+          if [[ "${{ inputs.stack }}" == "23.2-experimental" && "${{ inputs.build_product }}" == "wear_duchamp-userdebug" ]]; then
+            echo "WARNING: 23.2-experimental is not the source-of-truth Snapboss baseline." >&2
           fi
           if [[ "${{ inputs.publish_release }}" == "true" ]]; then
-            [[ "${{ inputs.stack }}" == "23.2-current" ]] || {
-              echo "Only the primary 23.2-current stack may be published as a WeaR release." >&2
+            [[ "${{ inputs.stack }}" == "23.1-snapboss" ]] || {
+              echo "Only the Snapboss-based 23.1 stack may be published as a WeaR release." >&2
               exit 1
             }
             [[ "${{ inputs.build_product }}" == "wear_duchamp-userdebug" ]] || {
