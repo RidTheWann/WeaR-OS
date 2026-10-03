@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<manifest>
+    <!-- WeaR OS current duchamp stack.
+         Device/kernel/vendor revisions are pinned for reproducible bring-up. -->
+
+    <remote name="github" fetch="https://github.com/" />
+
+    <project
+        path="vendor/wear"
+        name="RidTheWann/WeaR-OS"
+        remote="github"
+        revision="main" />
+
+    <!-- Current community-maintained duchamp device tree. -->
+    <project
+        path="device/xiaomi/duchamp"
+        name="mt6897-devs/device_xiaomi_duchamp"
+        remote="github"
+        revision="6a2cf3be024e42cea0c22cbae7bf16f5def1309d" />
+
+    <project
+        path="device/xiaomi/duchamp-kernel"
+        name="mt6897-devs/device_xiaomi_duchamp-kernel"
+        remote="github"
+        revision="a2fd5cb97fd76a4eb61fcfe11af03ae74bd57416" />
+
+    <project
+        path="vendor/xiaomi/duchamp"
+        name="mt6897-devs/vendor_xiaomi_duchamp"
+        remote="github"
+        revision="38c572c3914d90970dce609fef9186cd6decf1db" />
+
+    <project
+        path="device/mediatek/sepolicy_vndr"
+        name="LineageOS/android_device_mediatek_sepolicy_vndr"
+        remote="github"
+        revision="1b12039600b2ad9b1a435682bc8f61fd1f0b111d" />
+
+    <project
+        path="hardware/mediatek"
+        name="LineageOS/android_hardware_mediatek"
+        remote="github"
+        revision="68f9be72a32bca66e7c63d69e9739b18f13c8b48" />
+
+    <project
+        path="hardware/xiaomi"
+        name="mt6897-devs/hardware_xiaomi"
+        remote="github"
+        revision="37fe5e4a6acbce4ca3d91e059fd7bd60a0890540" />
+
+    <project
+        path="hardware/dolby"
+        name="Pong-Development/hardware_dolby"
+        remote="github"
+        revision="6300a4e30757d5810d62b2df0cff973ec438a70f" />
+
+    <project
+        path="packages/apps/Aperture"
+        name="Nothing-2A/android_packages_apps_Aperture"
+        remote="github"
+        revision="fff44683f5939a33eece44a8fc7611d1a60ad841" />
+</manifest>
