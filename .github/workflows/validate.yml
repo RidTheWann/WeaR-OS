@@ -29,12 +29,20 @@ jobs:
           set -euo pipefail
           python3 - <<'PY'
           from pathlib import Path
+          import sys
           import xml.etree.ElementTree as ET
 
-          for path in Path(".").rglob("*.xml"):
-              ET.parse(path)
+          failures = 0
+          for path in sorted(Path(".").rglob("*.xml")):
+              try:
+                  ET.parse(path)
+                  print(f"OK  {path}")
+              except Exception as exc:
+                  print(f"FAIL {path}: {exc}", file=sys.stderr)
+                  failures += 1
 
-          print("XML validation passed.")
+          if failures:
+              raise SystemExit(f"{failures} XML file(s) failed to parse")
           PY
 
       - name: Validate device-tree anchors
