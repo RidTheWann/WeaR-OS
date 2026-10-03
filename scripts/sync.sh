@@ -39,7 +39,9 @@ python3 - "$ROOT_DIR/manifests/duchamp-lineage-23.1.xml" "$MANIFEST_OUT" "$WEAR_
 from pathlib import Path
 import sys
 
-src, dst, wear_ref = map(Path, sys.argv[1:])
+src = Path(sys.argv[1])
+dst = Path(sys.argv[2])
+wear_ref = sys.argv[3]
 
 data = src.read_text(encoding="utf-8")
 needle = '''name="RidTheWann/WeaR-OS"
@@ -47,7 +49,7 @@ needle = '''name="RidTheWann/WeaR-OS"
         revision="main"'''
 replacement = f'''name="RidTheWann/WeaR-OS"
         remote="github"
-        revision="{sys.argv[3]}"'''
+        revision="{wear_ref}"'''
 
 if needle not in data:
     raise SystemExit("ERROR: WeaR project entry was not found in the manifest template.")
