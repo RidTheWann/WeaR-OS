@@ -1,0 +1,4 @@
+binder_call(hal_touchfeature_xiaomi_client, hal_touchfeature_xiaomi_server)
+binder_use(hal_touchfeature_xiaomi_server)
+
+vndbinder_use(hal_touchfeature_xiaomi)
