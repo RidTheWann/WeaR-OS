@@ -1,0 +1,76 @@
+name: WeaR duchamp source audit
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  source-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout WeaR device tree
+        uses: actions/checkout@v4
+
+      - name: Compare against pinned hardware reference
+        shell: bash
+        env:
+          SOURCE_REF: 50f301982df14af45af137ba87c565a459a7e65c
+        run: |
+          set -euo pipefail
+
+          git clone --quiet --no-tags https://github.com/snapboss/device_xiaomi_duchamp.git /tmp/reference
+          git -C /tmp/reference checkout --quiet "$SOURCE_REF"
+
+          allowed_differences=(
+            "AndroidProducts.mk"
+            "README.md"
+            "wear_duchamp.mk"
+            "CONTRIBUTING.md"
+            "LICENSE"
+            "SECURITY.md"
+            ".editorconfig"
+            ".gitattributes"
+            ".gitignore"
+            "overlay/FrameworksResOverlayDuchamp/res/values/config.xml"
+          )
+
+          is_allowed() {
+            local path="$1"
+            case "$path" in
+              .github/*|docs/*) return 0 ;;
+            esac
+            for allowed in "${allowed_differences[@]}"; do
+              [[ "$path" == "$allowed" ]] && return 0
+            done
+            return 1
+          }
+
+          mapfile -t source_files < <(cd /tmp/reference && git ls-files | sort)
+          mapfile -t target_files < <(git ls-files | sort)
+
+          for path in "${source_files[@]}"; do
+            [[ -e "$path" ]] || { echo "Missing source file: $path" >&2; exit 1; }
+            if ! is_allowed "$path"; then
+              cmp -s "/tmp/reference/$path" "$path" || {
+                echo "Unexpected device-tree modification: $path" >&2
+                exit 1
+              }
+            fi
+          done
+
+          for path in "${target_files[@]}"; do
+            if ! git -C /tmp/reference ls-files --error-unmatch "$path" >/dev/null 2>&1; then
+              is_allowed "$path" || {
+                echo "Unexpected extra file: $path" >&2
+                exit 1
+              }
+            fi
+          done
+
+          echo "Pinned Snapboss device tree matches except documented WeaR-owned files."
