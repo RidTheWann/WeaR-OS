@@ -1,0 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+//
+// WeaR OS project namespace. The repository is synced into vendor/wear.
+
+soong_namespace {}

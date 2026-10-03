@@ -1,14 +1,27 @@
-# Android build output
+# Local Android build tree
 out/
 .repo/
-*.log
-wear-artifacts/
+
+# Local device/vendor working copies
+vendor/xiaomi/
+device/xiaomi/duchamp/
+device/xiaomi/duchamp-kernel/
+
+# Host/editor files
 .idea/
 .vscode/
 *.swp
+*.swo
 .DS_Store
+
+# Credentials / private signing material
 *.pem
 *.pk8
 *.key
+*.p12
 keys/
 private_keys/
+
+# Logs
+*.log
+logs/

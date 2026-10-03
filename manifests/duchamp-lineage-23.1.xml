@@ -1,5 +1,81 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <manifest>
-    <remote name="github" fetch="https://github.com/" />
-    <project path="device/xiaomi/duchamp" name="snapboss/device_xiaomi_duchamp" remote="github" revision="50f301982df14af45af137ba87c565a459a7e65c" />
+    <!-- Base Android source. The manifest revision is pinned by sync.sh. -->
+
+    <!-- WeaR project itself is synced into vendor/wear. sync.sh replaces main
+         with the exact WEAR_REF requested by the build. -->
+    <project
+        path="vendor/wear"
+        name="RidTheWann/WeaR-OS"
+        remote="github"
+        revision="main" />
+
+    <!-- Source of truth: the user-supplied LineageOS duchamp tree. -->
+    <project
+        path="device/xiaomi/duchamp"
+        name="snapboss/device_xiaomi_duchamp"
+        remote="github"
+        revision="50f301982df14af45af137ba87c565a459a7e65c" />
+
+    <!-- Kernel output package consumed by Snapboss BoardConfig.mk. -->
+    <project
+        path="device/xiaomi/duchamp-kernel"
+        name="mt6897-devs/device_xiaomi_duchamp-kernel"
+        remote="github"
+        revision="3377ea91ee2d69968578039422c38c9eaea13b48" />
+
+    <!-- Proprietary duchamp vendor package. The public repository is used as
+         an external dependency; its contents are not copied into WeaR-OS. -->
+    <project
+        path="vendor/xiaomi/duchamp"
+        name="snapboss/vendor_xiaomi_duchamp"
+        remote="github"
+        revision="b9dbddff44d3f529fb120039da2c7e30d98a33f4" />
+
+    <!-- Snapboss's MediaTek/Xiaomi platform forks used by the device tree. -->
+    <project
+        path="hardware/xiaomi"
+        name="snapboss/hardware_xiaomi"
+        remote="github"
+        revision="d41da4433965a36d2490ec86a96b90e00cc76100" />
+
+    <project
+        path="hardware/mediatek"
+        name="snapboss/hardware_mediatek"
+        remote="github"
+        revision="72bf3623fa9bb9bd15eb5b57588ba9cd05f8e809" />
+
+    <project
+        path="device/mediatek/sepolicy_vndr"
+        name="snapboss/device_mediatek_sepolicy_vndr"
+        remote="github"
+        revision="1c63d2fbd784ad4ef860c6000d9c0df454529869" />
+
+    <!-- Lineage power framework consumed from hardware/lineage/interfaces. -->
+    <project
+        path="hardware/lineage/interfaces"
+        name="LineageOS/android_hardware_lineage_interfaces"
+        remote="github"
+        revision="f53e605bfab5f9eb5af9d3493a7a6ee5652a1440" />
+
+    <!-- Snapboss uses the Dolby makefile unconditionally from device.mk. -->
+    <project
+        path="hardware/dolby"
+        name="snapboss/hardware_dolby"
+        remote="github"
+        revision="406f3825c2875b5fd20e78c76c96693c79340c67" />
+
+    <!-- Snapboss device.mk selects the QTI AIDL vibrator service. -->
+    <project
+        path="vendor/qcom/opensource/vibrator"
+        name="LineageOS/android_vendor_qcom_opensource_vibrator"
+        remote="github"
+        revision="411ec49027fd912790860971dc3a75f7154166c6" />
+
+    <!-- Target of LineageApertureOverlayDuchamp in the Snapboss tree. -->
+    <project
+        path="packages/apps/Aperture"
+        name="snapboss/android_packages_apps_Aperture"
+        remote="github"
+        revision="245d6481f3a6b138aeecca9a1c18d4d8b6096d5f" />
 </manifest>
