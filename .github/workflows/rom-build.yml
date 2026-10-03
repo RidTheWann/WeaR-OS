@@ -1,0 +1,179 @@
+name: WeaR OS ROM Build
+
+on:
+  workflow_dispatch:
+    inputs:
+      build_product:
+        description: Android product
+        required: true
+        default: wear_duchamp-userdebug
+        type: choice
+        options:
+          - wear_duchamp-userdebug
+          - lineage_duchamp-userdebug
+      lineage_ref:
+        description: Immutable LineageOS manifest revision
+        required: true
+        default: 7d408383a8f199ba9a72e8a3b4314c6d848b459c
+        type: string
+      wear_ref:
+        description: Immutable WeaR OS commit, or main for development
+        required: true
+        default: main
+        type: string
+      jobs:
+        description: Android build jobs
+        required: true
+        default: "2"
+        type: string
+      clean_build:
+        description: Remove Android out/ before building
+        required: true
+        default: false
+        type: boolean
+      publish_release:
+        description: Publish the ROM ZIP to a GitHub Release
+        required: true
+        default: false
+        type: boolean
+      release_tag:
+        description: Required only when publishing a release
+        required: false
+        default: ""
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: wear-rom-build
+  cancel-in-progress: false
+
+jobs:
+  build:
+    # Dedicated runner only. Do not run this workflow for pull requests.
+    runs-on: [self-hosted, linux, x64, wearos-build]
+    timeout-minutes: 350
+    permissions:
+      contents: write
+
+    steps:
+      - name: Validate inputs
+        shell: bash
+        env:
+          JOBS_INPUT: ${{ inputs.jobs }}
+          PUBLISH_RELEASE: ${{ inputs.publish_release }}
+          RELEASE_TAG: ${{ inputs.release_tag }}
+          BUILD_PRODUCT: ${{ inputs.build_product }}
+        run: |
+          set -euo pipefail
+          [[ "$JOBS_INPUT" =~ ^[1-9][0-9]?$ ]] || { echo "jobs must be 1-64" >&2; exit 1; }
+          (( 10#$JOBS_INPUT <= 64 )) || { echo "jobs must be 1-64" >&2; exit 1; }
+          if [[ "$PUBLISH_RELEASE" == "true" ]]; then
+            [[ "$BUILD_PRODUCT" == "wear_duchamp-userdebug" ]] || { echo "Only wear_duchamp-userdebug may be released." >&2; exit 1; }
+            [[ "$RELEASE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z.-]+)?$ ]] || { echo "Invalid release tag." >&2; exit 1; }
+          fi
+
+      - name: Checkout WeaR OS
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Validate project repository
+        run: bash scripts/validate.sh
+
+      - name: Validate build host
+        run: bash scripts/host-check.sh
+
+      - name: Check required tools
+        shell: bash
+        run: |
+          set -euo pipefail
+          for tool in git repo git-lfs python3 curl zip unzip rsync ccache sha256sum gh; do
+            command -v "$tool" >/dev/null 2>&1 || { echo "Missing tool: $tool" >&2; exit 1; }
+          done
+
+      - name: Configure ccache
+        shell: bash
+        run: |
+          set -euo pipefail
+          export CCACHE_DIR="${CCACHE_DIR:-$HOME/.cache/ccache-wear}"
+          echo "CCACHE_DIR=$CCACHE_DIR" >> "$GITHUB_ENV"
+          mkdir -p "$CCACHE_DIR"
+          ccache -M 40G
+
+      - name: Synchronize Android source
+        shell: bash
+        env:
+          ANDROID_DIR: ${{ github.workspace }}/../android-source
+          LINEAGE_REF: ${{ inputs.lineage_ref }}
+          WEAR_REF: ${{ inputs.wear_ref }}
+          JOBS: ${{ inputs.jobs }}
+        run: bash scripts/sync.sh
+
+      - name: Verify source revisions
+        shell: bash
+        env:
+          ANDROID_DIR: ${{ github.workspace }}/../android-source
+          LINEAGE_REF: ${{ inputs.lineage_ref }}
+          WEAR_REF: ${{ inputs.wear_ref }}
+        run: bash scripts/verify-source.sh
+
+      - name: Clean Android output
+        if: ${{ inputs.clean_build }}
+        shell: bash
+        env:
+          ANDROID_DIR: ${{ github.workspace }}/../android-source
+        run: rm -rf "$ANDROID_DIR/out"
+
+      - name: Build ROM
+        shell: bash
+        env:
+          ANDROID_DIR: ${{ github.workspace }}/../android-source
+          BUILD_PRODUCT: ${{ inputs.build_product }}
+          JOBS: ${{ inputs.jobs }}
+        run: bash scripts/build.sh
+
+      - name: Collect artifacts
+        shell: bash
+        env:
+          ANDROID_DIR: ${{ github.workspace }}/../android-source
+          BUILD_PRODUCT: ${{ inputs.build_product }}
+          LINEAGE_REF: ${{ inputs.lineage_ref }}
+          WEAR_REF: ${{ inputs.wear_ref }}
+        run: bash scripts/collect-artifacts.sh
+
+      - name: Upload metadata
+        uses: actions/upload-artifact@v7
+        with:
+          name: wear-os-build-${{ github.run_number }}
+          path: |
+            ${{ github.workspace }}/../android-source/wear-artifacts/build-info.txt
+            ${{ github.workspace }}/../android-source/wear-artifacts/SHA256SUMS
+            ${{ github.workspace }}/../android-source/wear-artifacts/source-manifest.xml
+          retention-days: 7
+          if-no-files-found: error
+
+      - name: Publish release
+        if: ${{ inputs.publish_release }}
+        shell: bash
+        env:
+          ANDROID_DIR: ${{ github.workspace }}/../android-source
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ inputs.release_tag }}
+        run: |
+          set -euo pipefail
+          ROM="$(find "$ANDROID_DIR/wear-artifacts" -maxdepth 1 -type f -name '*.zip' -print -quit)"
+          [[ -n "$ROM" ]] || { echo "No OTA ZIP found." >&2; exit 1; }
+          gh release create "$RELEASE_TAG" \
+            "$ROM" \
+            "$ANDROID_DIR/wear-artifacts/SHA256SUMS" \
+            "$ANDROID_DIR/wear-artifacts/source-manifest.xml" \
+            --title "WeaR OS $RELEASE_TAG" \
+            --generate-notes \
+            --target "$GITHUB_SHA"
+
+      - name: Ccache statistics
+        if: always()
+        run: ccache -s || true
