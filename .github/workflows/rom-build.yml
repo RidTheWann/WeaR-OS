@@ -219,7 +219,7 @@ jobs:
           set -euo pipefail
           cd "$ANDROID_DIR"
           source build/envsetup.sh
-          lunch "wear_duchamp-\${BUILD_TYPE}"
+          lunch "wear_duchamp-${BUILD_TYPE}"
           mka bacon -j"$JOBS"
 
       - name: Collect artifacts
