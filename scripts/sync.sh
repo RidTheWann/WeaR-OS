@@ -14,6 +14,26 @@ command -v repo >/dev/null 2>&1 || {
     exit 1
 }
 
+command -v python3 >/dev/null 2>&1 || {
+    echo "ERROR: python3 is required." >&2
+    exit 1
+}
+
+[[ "$LINEAGE_REF" =~ ^[0-9a-fA-F]{40}$ ]] || {
+    echo "ERROR: LINEAGE_REF must be a full 40-character commit SHA." >&2
+    exit 1
+}
+
+[[ "$WEAR_REF" == "main" || "$WEAR_REF" =~ ^[0-9a-fA-F]{40}$ ]] || {
+    echo "ERROR: WEAR_REF must be main or a full 40-character commit SHA." >&2
+    exit 1
+}
+
+[[ "$JOBS" =~ ^[1-9][0-9]?$ ]] && (( 10#$JOBS <= 64 )) || {
+    echo "ERROR: JOBS must be between 1 and 64." >&2
+    exit 1
+}
+
 [[ -d "$ROOT_DIR/manifests" ]] || {
     echo "ERROR: WeaR manifest directory is missing." >&2
     exit 1
@@ -30,19 +50,33 @@ mkdir -p .repo/local_manifests
 python3 - "$ROOT_DIR/manifests/duchamp-lineage-23.1.xml" ".repo/local_manifests/wear-duchamp.xml" "$WEAR_REF" <<'PY'
 from pathlib import Path
 import sys
+import xml.etree.ElementTree as ET
 
 src = Path(sys.argv[1])
 dst = Path(sys.argv[2])
 wear_ref = sys.argv[3]
 
-data = src.read_text(encoding="utf-8")
-needle = 'name="RidTheWann/WeaR-OS"\\n        remote="github"\\n        revision="main"'
-replacement = 'name="RidTheWann/WeaR-OS"\\n        remote="github"\\n        revision="' + wear_ref + '"'
+if wear_ref != "main":
+    if len(wear_ref) != 40 or any(c not in "0123456789abcdefABCDEF" for c in wear_ref):
+        raise SystemExit("ERROR: WEAR_REF must be main or a full 40-character commit SHA")
 
-if needle not in data:
-    raise SystemExit("ERROR: WeaR project entry missing from manifest template")
+tree = ET.parse(src)
+root = tree.getroot()
 
-dst.write_text(data.replace(needle, replacement, 1), encoding="utf-8")
+matches = [
+    project for project in root.findall("project")
+    if project.get("name") == "RidTheWann/WeaR-OS"
+    and project.get("path") == "vendor/wear"
+    and project.get("remote") == "github"
+]
+
+if len(matches) != 1:
+    raise SystemExit(
+        f"ERROR: expected exactly one vendor/wear WeaR project entry, found {len(matches)}"
+    )
+
+matches[0].set("revision", wear_ref)
+tree.write(dst, encoding="utf-8", xml_declaration=True)
 PY
 
 SYNC_ARGS=(
