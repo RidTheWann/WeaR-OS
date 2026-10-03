@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # SPDX-License-Identifier: Apache-2.0
 #
-# Verify exact revisions declared by the WeaR bring-up manifest.
+# Verify exact upstream revisions declared by the WeaR bring-up manifest.
+# Run this before a release build, after repo sync has completed.
 
 set -euo pipefail
 
@@ -23,22 +24,30 @@ verify_repo() {
     local path="$1"
     local expected="$2"
     local actual
+    local git_dir
 
-    if [[ ! -d "$path/.git" ]]; then
+    if ! git_dir="$(git -C "$path" rev-parse --git-dir 2>/dev/null)"; then
         echo "MISSING  $path"
         failures=$((failures + 1))
         return
     fi
 
     actual="$(git -C "$path" rev-parse HEAD)"
-    if [[ "$actual" == "$expected" ]]; then
-        echo "OK       $path @ $actual"
-    else
+    if [[ "$actual" != "$expected" ]]; then
         echo "MISMATCH $path"
         echo "         expected: $expected"
         echo "         actual:   $actual"
         failures=$((failures + 1))
+        return
     fi
+
+    if [[ -n "$(git -C "$path" status --porcelain --untracked-files=all)" ]]; then
+        echo "DIRTY    $path"
+        failures=$((failures + 1))
+        return
+    fi
+
+    echo "OK       $path @ $actual"
 }
 
 verify_repo "device/xiaomi/duchamp" "50f301982df14af45af137ba87c565a459a7e65c"
