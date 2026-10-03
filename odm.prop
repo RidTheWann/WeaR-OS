@@ -1,0 +1,26 @@
+# Display Feature
+persist.vendor.dc_backlight.enable=false
+ro.vendor.cabc.enable=false
+ro.vendor.display.all_modes_support_WCG.enable=true
+ro.vendor.display.update_gray_by_temperature=true
+ro.vendor.histogram.enable=1
+ro.vendor.localhbm.enable=true
+ro.vendor.mi_sf.hdr_enable_flatmode=true
+ro.vendor.mtk.pq.aidl=true
+ro.vendor.mtk.pq.odm=true
+ro.vendor.sre.enable=false
+ro.vendor.xiaomi.bl.poll=true
+sys.displayfeature_hidl=false
+vendor.displayfeature.entry.enable=true
+
+# SKU
+ro.product.property_source_order=odm,vendor,product,system_ext,system
+import /odm/etc/${ro.boot.hwc}.prop
+
+# Thermal
+persist.vendor.tracking.dfs=true
+
+# Vibrator
+ro.odm.mm.vibrator.diff_f0=1
+ro.odm.mm.vibrator.si_sys_path=/sys/bus/i2c/drivers/sih_haptic_688X/0-006b
+ro.odm.mm.vibrator.sys_path=/sys/bus/i2c/drivers/awinic_haptic/0-005a
