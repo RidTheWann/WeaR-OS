@@ -85,6 +85,10 @@ jobs:
             echo "WARNING: 23.1 Snapboss is the legacy compatibility profile; release publishing should use 23.2-current." >&2
           fi
           if [[ "${{ inputs.publish_release }}" == "true" ]]; then
+            [[ "${{ inputs.stack }}" == "23.2-current" ]] || {
+              echo "Only the primary 23.2-current stack may be published as a WeaR release." >&2
+              exit 1
+            }
             [[ "${{ inputs.build_product }}" == "wear_duchamp-userdebug" ]] || {
               echo "Only wear_duchamp-userdebug builds may be published as WeaR releases." >&2
               exit 1
