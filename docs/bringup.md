@@ -1,68 +1,37 @@
 # WeaR OS Bring-up
 
-## Gate B0 — Repository integrity
+## B0 — Device-tree integrity
 
-Run:
+The repository must contain a conventional duchamp device tree with valid
+Android build metadata, VINTF XML, extraction manifests and Python helpers.
 
-    bash scripts/validate.sh
+Validation is performed by GitHub Actions on every push and pull request.
 
-Expected result: PASSED.
+## B1 — Android source synchronization
 
-## Gate B1 — Source synchronization
+Initialize the LineageOS 23.1 source outside this repository and add this
+repository as the device/xiaomi/duchamp project through the local manifest.
 
-From the Android source parent directory:
+The selected dependency revisions must be verified before compilation.
 
-    bash /path/to/WeaR-OS/scripts/sync.sh
-    bash /path/to/WeaR-OS/scripts/verify-source.sh
+## B2 — First compile
 
-Do not proceed when a project is missing, dirty, or at the wrong revision.
+Build the device product:
 
-## Gate B2 — First compile
+    wear_duchamp-userdebug
 
-First build the reference product:
+The first compile is a compatibility test. Record Soong, Make, VINTF, SELinux,
+linker, vendor and kernel-interface failures before changing the source stack.
 
-    BUILD_PRODUCT=lineage_duchamp-userdebug bash /path/to/WeaR-OS/scripts/build.sh
+## B3 — Device validation
 
-Then build the custom product:
+After flashing, validate boot, ADB, display, touch, audio, camera, Wi-Fi,
+Bluetooth, cellular/IMS, sensors, NFC, USB/OTG, UDFPS, charging, thermal
+behavior and sleep/wake.
 
-    BUILD_PRODUCT=wear_duchamp-userdebug bash /path/to/WeaR-OS/scripts/build.sh
+## B4 — WeaR feature layer
 
-The first build is not a performance benchmark. Its purpose is to identify
-compiler, Soong, VINTF, sepolicy, module, or vendor compatibility errors.
+Only after the hardware baseline is boot-verified should WeaR-specific
+framework, SystemUI, Settings, performance and game-mode features be added.
 
-## Gate B3 — Device validation
-
-After installation/boot, record:
-
-| Function | Required state |
-| --- | --- |
-| Boot / ADB | PASS |
-| Display / touch | PASS |
-| Audio / microphone | PASS |
-| Wi-Fi | PASS |
-| Bluetooth | PASS |
-| Cellular / IMS | PASS |
-| Camera | PASS |
-| UDFPS / fingerprint | PASS |
-| NFC | PASS |
-| Sensors | PASS |
-| USB / OTG | PASS |
-| Charging | PASS |
-| Thermal | PASS |
-| Sleep / wake | PASS |
-
-Any regression blocks performance work.
-
-## Gate B4 — WeaR feature development
-
-Once the hardware baseline is stable, introduce one feature class at a time:
-
-1. branding
-2. resource overlays
-3. Settings/SystemUI
-4. Java/Kotlin services
-5. native services
-6. power/performance integration
-7. kernel changes
-
-Each class must retain a known-good rollback point.
+Changes should be isolated by subsystem so failures can be bisected cleanly.
