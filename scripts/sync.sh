@@ -6,7 +6,15 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-ANDROID_DIR="${ANDROID_DIR:-$ROOT_DIR/..}"
+
+if [[ -f "$ROOT_DIR/../build/envsetup.sh" ]]; then
+    ANDROID_DIR="${ANDROID_DIR:-$ROOT_DIR/..}"
+elif [[ -f "$ROOT_DIR/../../build/envsetup.sh" ]]; then
+    ANDROID_DIR="${ANDROID_DIR:-$ROOT_DIR/../..}"
+else
+    ANDROID_DIR="${ANDROID_DIR:-$ROOT_DIR/..}"
+fi
+
 LINEAGE_BRANCH="${LINEAGE_BRANCH:-lineage-23.1}"
 JOBS="${JOBS:-4}"
 
@@ -17,12 +25,9 @@ command -v repo >/dev/null 2>&1 || {
 
 cd "$ANDROID_DIR"
 
-if [[ ! -d ".repo" ]]; then
-    echo "==> Initializing LineageOS $LINEAGE_BRANCH"
-    repo init -u https://github.com/LineageOS/android.git \
-        -b "$LINEAGE_BRANCH" \
-        --git-lfs
-fi
+repo init -u https://github.com/LineageOS/android.git \
+    -b "$LINEAGE_BRANCH" \
+    --git-lfs
 
 mkdir -p .repo/local_manifests
 install -m 0644 "$ROOT_DIR/manifests/duchamp-lineage-23.1.xml" \
@@ -44,4 +49,4 @@ repo sync "${SYNC_ARGS[@]}"
 
 echo
 echo "Source synchronization complete."
-echo "Next: $ROOT_DIR/scripts/build.sh"
+echo "Run scripts/verify-source.sh before the first build."
