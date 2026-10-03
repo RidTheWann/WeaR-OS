@@ -2,7 +2,7 @@
 
 ## CI model
 
-WeaR OS uses two different execution classes:
+WeaR OS uses two execution classes:
 
 1. GitHub-hosted CI for repository validation.
 2. A dedicated self-hosted runner for full Android compilation.
@@ -20,7 +20,17 @@ Register the build machine with these labels:
     x64
     wearos-build
 
-The workflow routes only to runners carrying all four labels.
+GitHub routes the job only to a runner matching all requested labels.
+
+## Runner setup
+
+1. Open the repository Settings -> Actions -> Runners.
+2. Choose New self-hosted runner and select Linux x64.
+3. Follow the exact registration commands GitHub displays for the runner.
+4. During runner configuration, add the custom label `wearos-build`.
+5. Install the runner as a service on a dedicated build machine if it is intended to run unattended.
+
+Do not place personal files, SSH keys, browser profiles, or unrelated secrets on this runner.
 
 ## Host requirements
 
@@ -30,48 +40,57 @@ Recommended development target:
 - 64 GiB RAM preferred for modern LineageOS source builds
 - 400 GiB or more free SSD space preferred
 - persistent ccache storage
-- git, repo, Python 3, zip/unzip, rsync, curl, ccache and Android build dependencies
+- git, repo, Git LFS, Python 3, zip/unzip, rsync, curl, ccache and Android build dependencies
 
 Run `bash scripts/host-check.sh` before the first build.
 
-## First build
+## Build workflow
 
-Open GitHub Actions and run **WeaR OS ROM Build** manually.
+Run **WeaR OS ROM Build** manually from the Actions tab.
 
-Recommended first target:
+Inputs:
 
-    build_product = lineage_duchamp-userdebug
-    wear_ref = <the exact WeaR OS commit to test>
-    jobs = 1 or 2 on a 16 GiB machine
-    clean_build = false
-    publish_release = false
+- `build_product`: `lineage_duchamp-userdebug` for the hardware baseline or `wear_duchamp-userdebug` for WeaR OS.
+- `lineage_ref`: branch such as `lineage-23.1` during development, or an immutable Lineage manifest SHA for reproducible builds.
+- `wear_ref`: `main` during development, or an immutable WeaR commit SHA for reproducible builds.
+- `jobs`: build parallelism. Use 1-2 on a 16 GiB host.
+- `clean_build`: clear the persistent `out/` tree.
+- `publish_release`: publish the flashable OTA ZIP as a GitHub Release asset.
+- `release_tag`: required only for a release publication.
 
-Reproduce the upstream hardware baseline before relying on the custom WeaR product.
+## Six-hour execution boundary
 
-## WeaR build
+GitHub Actions job execution has a maximum of 360 minutes. The ROM workflow uses a 350-minute timeout to leave a small margin for final packaging.
 
-After the baseline is known-good:
+A large Android build may exceed one job on a low-memory or low-core machine. The Android source and `out/` directory live on the persistent self-hosted workspace, so a later manual run with `clean_build=false` can continue incrementally from the existing build state.
 
-    build_product = wear_duchamp-userdebug
+Do not expect the GitHub Actions token to remain valid beyond 24 hours; the workflow therefore does not try to run a multi-day job.
 
-Use an immutable WeaR commit for reproducible builds instead of `main`.
+## Ccache
 
-## Persistent source directory
+The workflow uses a persistent ccache directory under the runner user's home directory and caps it at 40 GiB. This is intentionally stored on the runner rather than GitHub Actions cache because Android source/build state is much larger than the default hosted cache allowance.
 
-The workflow keeps the Android source under:
+## Distribution
 
-    $RUNNER_WORKSPACE/android-source
+Actions artifacts contain only small build metadata. The ROM ZIP is distributed through GitHub Releases when explicitly requested.
 
-on the self-hosted runner. This allows repo history and ccache to persist across jobs. Do not share this runner with unrelated untrusted workloads.
-
-## Artifacts and releases
-
-Small metadata is uploaded as an Actions artifact. The flashable ROM itself is published as a GitHub Release asset only when `publish_release` is explicitly enabled.
-
-GitHub's current public-plan Actions artifact storage is small compared with an Android ROM build, while GitHub Releases permit individual release assets below 2 GiB and have no total release-size or bandwidth limit. Therefore the ROM distribution path is Releases, not the Actions artifact store.
+GitHub currently permits individual release assets below 2 GiB and has no total release-size or bandwidth limit. The workflow checks the ROM size before uploading.
 
 ## Security
 
 Do not put Xiaomi/MediaTek proprietary blobs or signing private keys into the repository or Actions artifacts.
 Do not use `pull_request_target` or `workflow_run` to execute forked code on the ROM runner.
 Keep release signing as a separate protected step once WeaR reaches release status.
+
+## Release reproducibility
+
+For a release, record all of these in the release metadata:
+
+    Lineage manifest SHA
+    WeaR commit SHA
+    device tree SHA
+    kernel SHA
+    vendor SHA
+    generated ZIP SHA256
+
+The workflow already preserves the rendered local source manifest and a SHA256SUMS file.
