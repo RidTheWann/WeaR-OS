@@ -1,0 +1,265 @@
+name: WeaR OS ROM build
+
+on:
+  workflow_dispatch:
+    inputs:
+      lineage_ref:
+        description: LineageOS 23.1 manifest commit SHA
+        required: true
+        default: 7d408383a8f199ba9a72e8a3b4314c6d848b459c
+        type: string
+      wear_ref:
+        description: WeaR device-tree commit SHA (use main only for development)
+        required: true
+        default: main
+        type: string
+      build_type:
+        description: Android build variant
+        required: true
+        default: userdebug
+        type: choice
+        options:
+          - userdebug
+          - eng
+      jobs:
+        description: Build parallelism
+        required: true
+        default: "8"
+        type: string
+      clean:
+        description: Delete out/ before building
+        required: true
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+concurrency:
+  group: wear-duchamp-rom-build
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: [self-hosted, linux, x64, wearos-build]
+    timeout-minutes: 350
+
+    steps:
+      - name: Checkout device tree
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Validate inputs
+        shell: bash
+        env:
+          LINEAGE_REF: \${{ inputs.lineage_ref }}
+          WEAR_REF: \${{ inputs.wear_ref }}
+          JOBS: \${{ inputs.jobs }}
+        run: |
+          set -euo pipefail
+          [[ "$LINEAGE_REF" =~ ^[0-9a-fA-F]{40}$ ]] || {
+            echo "lineage_ref must be a full commit SHA." >&2
+            exit 1
+          }
+          [[ "$WEAR_REF" == "main" || "$WEAR_REF" =~ ^[0-9a-fA-F]{40}$ ]] || {
+            echo "wear_ref must be main or a full commit SHA." >&2
+            exit 1
+          }
+          [[ "$JOBS" =~ ^[1-9][0-9]?$ ]] && ((10#$JOBS <= 64)) || {
+            echo "jobs must be between 1 and 64." >&2
+            exit 1
+          }
+
+      - name: Check build host
+        shell: bash
+        run: |
+          set -euo pipefail
+          for tool in git curl python3 repo ccache rsync zip unzip sha256sum; do
+            command -v "$tool" >/dev/null 2>&1 || {
+              echo "Missing required tool: $tool" >&2
+              exit 1
+            }
+          done
+          test "$(uname -m)" = "x86_64" || {
+            echo "A x86_64 Android build host is required." >&2
+            exit 1
+          }
+
+      - name: Initialize LineageOS source
+        shell: bash
+        env:
+          LINEAGE_REF: \${{ inputs.lineage_ref }}
+        run: |
+          set -euo pipefail
+          export ANDROID_DIR="$GITHUB_WORKSPACE/../android-source"
+          echo "ANDROID_DIR=$ANDROID_DIR" >> "$GITHUB_ENV"
+          mkdir -p "$ANDROID_DIR"
+          cd "$ANDROID_DIR"
+          repo init \
+            -u https://github.com/LineageOS/android.git \
+            -b "$LINEAGE_REF" \
+            --git-lfs
+
+      - name: Install immutable local manifest
+        shell: bash
+        env:
+          WEAR_REF: \${{ inputs.wear_ref }}
+        run: |
+          set -euo pipefail
+          mkdir -p "$ANDROID_DIR/.repo/local_manifests"
+
+          python3 - <<'PY'
+          import os
+          from pathlib import Path
+
+          wear_ref = os.environ["WEAR_REF"]
+          if wear_ref != "main" and len(wear_ref) != 40:
+              raise SystemExit("WEAR_REF must be main or a full commit SHA")
+
+          manifest = """<?xml version="1.0" encoding="UTF-8"?>
+          <manifest>
+              <remote name="github" fetch="https://github.com/"/>
+
+              <project name="RidTheWann/WeaR-OS"
+                       path="device/xiaomi/duchamp"
+                       remote="github"
+                       revision="%s"/>
+
+              <project name="snapboss/hardware_xiaomi"
+                       path="hardware/xiaomi"
+                       remote="github"
+                       revision="d41da4433965a36d2490ec86a96b90e00cc76100"/>
+              <project name="snapboss/hardware_mediatek"
+                       path="hardware/mediatek"
+                       remote="github"
+                       revision="72bf3623fa9bb9bd15eb5b57588ba9cd05f8e809"/>
+              <project name="snapboss/device_mediatek_sepolicy_vndr"
+                       path="device/mediatek/sepolicy_vndr"
+                       remote="github"
+                       revision="1c63d2fbd784ad4ef860c6000d9c0df454529869"/>
+              <project name="snapboss/vendor_xiaomi_duchamp"
+                       path="vendor/xiaomi/duchamp"
+                       remote="github"
+                       revision="b9dbddff44d3f529fb120039da2c7e30d98a33f4"/>
+              <project name="mt6897-devs/device_xiaomi_duchamp-kernel"
+                       path="device/xiaomi/duchamp-kernel"
+                       remote="github"
+                       revision="3377ea91ee2d69968578039422c38c9eaea13b48"/>
+              <project name="LineageOS/android_hardware_lineage_interfaces"
+                       path="hardware/lineage/interfaces"
+                       remote="github"
+                       revision="f53e605bfab5f9eb5af9d3493a7a6ee5652a1440"/>
+              <project name="snapboss/hardware_dolby"
+                       path="hardware/dolby"
+                       remote="github"
+                       revision="406f3825c2875b5fd20e78c76c96693c79340c67"/>
+              <project name="LineageOS/android_vendor_qcom_opensource_vibrator"
+                       path="vendor/qcom/opensource/vibrator"
+                       remote="github"
+                       revision="411ec49027fd912790860971dc3a75f7154166c6"/>
+              <project name="snapboss/android_packages_apps_Aperture"
+                       path="packages/apps/Aperture"
+                       remote="github"
+                       revision="245d6481f3a6b138aeecca9a1c18d4d8b6096d5f"/>
+          </manifest>
+          """ % wear_ref
+
+          Path(os.environ["ANDROID_DIR"], ".repo/local_manifests/duchamp-weaR.xml").write_text(
+              manifest, encoding="utf-8"
+          )
+          PY
+
+      - name: Sync source
+        shell: bash
+        env:
+          JOBS: \${{ inputs.jobs }}
+        run: |
+          set -euo pipefail
+          cd "$ANDROID_DIR"
+          repo sync -c --no-clone-bundle --no-tags --force-sync -j"$JOBS"
+
+      - name: Verify resolved source
+        shell: bash
+        env:
+          WEAR_REF: \${{ inputs.wear_ref }}
+        run: |
+          set -euo pipefail
+          cd "$ANDROID_DIR"
+
+          expected="$WEAR_REF"
+          if [[ "$expected" == "main" ]]; then
+            expected="$(git -C "$GITHUB_WORKSPACE" rev-parse HEAD)"
+          fi
+
+          test "$(git -C device/xiaomi/duchamp rev-parse HEAD)" = "$expected"
+          repo manifest -r > source-manifest.xml
+
+      - name: Configure ccache
+        shell: bash
+        run: |
+          set -euo pipefail
+          export CCACHE_DIR="$HOME/.cache/ccache-wear"
+          mkdir -p "$CCACHE_DIR"
+          ccache -M 40G
+          ccache -o compression=true
+
+      - name: Clean build output
+        if: \${{ inputs.clean }}
+        shell: bash
+        run: rm -rf "$ANDROID_DIR/out"
+
+      - name: Build wear_duchamp
+        shell: bash
+        env:
+          JOBS: \${{ inputs.jobs }}
+          BUILD_TYPE: \${{ inputs.build_type }}
+        run: |
+          set -euo pipefail
+          cd "$ANDROID_DIR"
+          source build/envsetup.sh
+          lunch "wear_duchamp-\${BUILD_TYPE}"
+          mka bacon -j"$JOBS"
+
+      - name: Collect artifacts
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$ANDROID_DIR"
+          rm -rf wear-artifacts
+          mkdir -p wear-artifacts
+
+          found=0
+          for f in \
+              out/target/product/duchamp/*ota*.zip \
+              out/target/product/duchamp/lineage-*.zip; do
+            if [[ -f "$f" ]]; then
+              cp -v "$f" wear-artifacts/
+              found=1
+            fi
+          done
+
+          (( found == 1 )) || {
+            echo "No OTA ZIP was produced." >&2
+            exit 1
+          }
+
+          repo manifest -r > wear-artifacts/source-manifest.xml
+          sha256sum wear-artifacts/*.zip > wear-artifacts/SHA256SUMS
+
+      - name: Upload ROM artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: wear-duchamp-\${{ github.run_number }}
+          path: |
+            \${{ env.ANDROID_DIR }}/wear-artifacts/*.zip
+            \${{ env.ANDROID_DIR }}/wear-artifacts/SHA256SUMS
+            \${{ env.ANDROID_DIR }}/wear-artifacts/source-manifest.xml
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Ccache statistics
+        if: always()
+        shell: bash
+        run: ccache -s || true
