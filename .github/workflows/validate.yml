@@ -66,8 +66,26 @@ jobs:
         run: |
           set -euo pipefail
           test -f .github/workflows/rom-build.yml
-          ! grep -R -n '\\${{' .github/workflows
-          grep -q 'lunch "wear_duchamp-${BUILD_TYPE}"' .github/workflows/rom-build.yml
+          backslash='\\'
+          dollar='
+      - name: Check repository hygiene
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if find . -type f               \( -name '*.img' -o -name '*.apk' -o -name '*.so' \)               -not -path './.git/*' | grep -q .; then
+            echo "Unexpected generated/proprietary binary found in device tree." >&2
+            exit 1
+          fi
+
+          test ! -d products
+          test ! -d manifests
+          test ! -d scripts
+
+          forbidden="${backslash}${dollar}{{"
+          ! grep -R -n -F "$forbidden" .github/workflows
+          expected_lunch='lunch "wear_duchamp-${BUILD_TYPE}"'
+          grep -q -F "$expected_lunch" .github/workflows/rom-build.yml
       - name: Check repository hygiene
         shell: bash
         run: |
