@@ -59,17 +59,24 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          [[ "${{ inputs.jobs }}" =~ ^[1-9][0-9]?$ ]] || {
+          JOBS_INPUT="${{ inputs.jobs }}"
+          [[ "$JOBS_INPUT" =~ ^[1-9][0-9]?$ ]] || {
             echo "jobs must be an integer from 1 to 64" >&2
             exit 1
           }
-          (( ${{ inputs.jobs }} <= 64 )) || {
+          (( 10#$JOBS_INPUT <= 64 )) || {
             echo "jobs must be an integer from 1 to 64" >&2
             exit 1
           }
-          if [[ "${{ inputs.publish_release }}" == "true" && -z "${{ inputs.release_tag }}" ]]; then
-            echo "release_tag is required when publish_release=true" >&2
-            exit 1
+          if [[ "${{ inputs.publish_release }}" == "true" ]]; then
+            [[ "${{ inputs.build_product }}" == "wear_duchamp-userdebug" ]] || {
+              echo "Only wear_duchamp-userdebug builds may be published as WeaR releases." >&2
+              exit 1
+            }
+            [[ -n "${{ inputs.release_tag }}" ]] || {
+              echo "release_tag is required when publish_release=true" >&2
+              exit 1
+            }
           fi
 
       - name: Checkout WeaR OS
