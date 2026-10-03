@@ -2,7 +2,7 @@
 #
 
 PRODUCT_MAKEFILES := \
-    $(LOCAL_DIR)/products/wear_duchamp.mk
+    $(LOCAL_DIR)/wear_duchamp.mk
 
 COMMON_LUNCH_CHOICES := \
     wear_duchamp-userdebug
