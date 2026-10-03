@@ -1,5 +1,0 @@
-// SPDX-License-Identifier: Apache-2.0
-//
-// Product definitions for WeaR OS.
-
-soong_namespace {}
