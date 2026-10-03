@@ -61,6 +61,7 @@ fi
 cat > "$ARTIFACT_DIR/build-info.txt" <<EOF
 WeaR OS build
 Build product: ${BUILD_PRODUCT:-unknown}
+Lineage reference: ${LINEAGE_REF:-unknown}
 WeaR reference: ${WEAR_REF:-unknown}
 Build commit: ${GITHUB_SHA:-unknown}
 ROM: $(basename "$OTA")
