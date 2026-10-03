@@ -73,13 +73,13 @@ for label, (path, expected_device_repo, expected_device_sha, expected_branch) in
     kernel = projects.get("device/xiaomi/duchamp-kernel")
     vendor = projects.get("vendor/xiaomi/duchamp")
 
-    if not device or device.get("name") != expected_device_repo:
+    if device is None or device.get("name") != expected_device_repo:
         raise SystemExit(f"{path}: wrong device tree repository")
     if device.get("revision") != expected_device_sha:
         raise SystemExit(f"{path}: wrong device tree revision")
-    if not kernel or kernel.get("revision") != "a2fd5cb97fd76a4eb61fcfe11af03ae74bd57416":
+    if kernel is None or kernel.get("revision") != "a2fd5cb97fd76a4eb61fcfe11af03ae74bd57416":
         raise SystemExit(f"{path}: unexpected kernel revision")
-    if not vendor or vendor.get("revision") != "38c572c3914d90970dce609fef9186cd6decf1db":
+    if vendor is None or vendor.get("revision") != "38c572c3914d90970dce609fef9186cd6decf1db":
         raise SystemExit(f"{path}: unexpected vendor revision")
 
     print(f"OK  {label} stack semantics; default base branch: {expected_branch}")
