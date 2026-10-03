@@ -6,10 +6,16 @@
 
 DEVICE_PATH := device/xiaomi/duchamp
 
+# Enable project quotas and casefolding for emulated storage without sdcardfs
 $(call inherit-product, $(SRC_TARGET_DIR)/product/emulated_storage.mk)
+
+# Enforce generic ramdisk allow list
 $(call inherit-product, $(SRC_TARGET_DIR)/product/generic_ramdisk.mk)
+
+# Setup dalvik vm configs
 $(call inherit-product, frameworks/native/build/phone-xhdpi-6144-dalvik-heap.mk)
 
+# A/B
 ifneq ($(WITH_GMS),true)
 $(call inherit-product, $(SRC_TARGET_DIR)/product/virtual_ab_ota/launch_with_vendor_ramdisk.mk)
 TARGET_RO_FILE_SYSTEM_TYPE := ext4
@@ -22,18 +28,7 @@ endif
 
 PRODUCT_PACKAGES += \
     com.android.hardware.boot \
-    android.hardware.boot-service.default_recovery \
-    otapreopt_script \
-    create_pl_dev \
-    create_pl_dev.recovery \
-    e2fsck.vendor_ramdisk \
-    fsck.f2fs.vendor_ramdisk \
-    linker.vendor_ramdisk \
-    resize2fs.vendor_ramdisk \
-    tune2fs.vendor_ramdisk \
-    update_engine \
-    update_engine_sideload \
-    update_verifier
+    android.hardware.boot-service.default_recovery
 
 AB_OTA_POSTINSTALL_CONFIG += \
     RUN_POSTINSTALL_system=true \
@@ -41,49 +36,93 @@ AB_OTA_POSTINSTALL_CONFIG += \
     FILESYSTEM_TYPE_system=$(TARGET_RO_FILE_SYSTEM_TYPE) \
     POSTINSTALL_OPTIONAL_system=true
 
+PRODUCT_PACKAGES += \
+    otapreopt_script
+
+PRODUCT_PACKAGES += \
+    create_pl_dev \
+    create_pl_dev.recovery
+
+PRODUCT_PACKAGES += \
+    e2fsck.vendor_ramdisk \
+    fsck.f2fs.vendor_ramdisk \
+    linker.vendor_ramdisk \
+    resize2fs.vendor_ramdisk \
+    tune2fs.vendor_ramdisk
+
+PRODUCT_PACKAGES += \
+    update_engine \
+    update_engine_sideload \
+    update_verifier
+
+# AAPT
 PRODUCT_AAPT_CONFIG := normal
 PRODUCT_AAPT_PREF_CONFIG := xxhdpi
 
 # Audio
 TARGET_EXCLUDES_AUDIOFX := true
+
 PRODUCT_PACKAGES += \
     android.hardware.audio.service \
     android.hardware.audio.effect@7.0-impl \
-    android.hardware.soundtrigger@2.3-impl \
+    android.hardware.soundtrigger@2.3-impl
+
+PRODUCT_PACKAGES += \
     audio.bluetooth.default \
     audio.primary.default \
     audio.r_submix.default \
     audio.usb.default \
-    audio_policy.stub \
+    audio_policy.stub
+
+PRODUCT_PACKAGES += \
     MtkInCallService
 
 PRODUCT_COPY_FILES += \
-    $(call find-copy-subdir-files,*,$(DEVICE_PATH)/configs/audio/,$(TARGET_COPY_OUT_VENDOR)/etc) \
+    $(call find-copy-subdir-files,*,$(DEVICE_PATH)/configs/audio/,$(TARGET_COPY_OUT_VENDOR)/etc)
+
+PRODUCT_COPY_FILES += \
     frameworks/av/services/audiopolicy/config/audio_policy_volumes.xml:$(TARGET_COPY_OUT_VENDOR)/etc/audio_policy_volumes.xml \
     frameworks/av/services/audiopolicy/config/bluetooth_audio_policy_configuration_7_0.xml:$(TARGET_COPY_OUT_VENDOR)/etc/bluetooth_audio_policy_configuration.xml \
     frameworks/av/services/audiopolicy/config/default_volume_tables.xml:$(TARGET_COPY_OUT_VENDOR)/etc/default_volume_tables.xml \
     frameworks/av/services/audiopolicy/config/r_submix_audio_policy_configuration.xml:$(TARGET_COPY_OUT_VENDOR)/etc/r_submix_audio_policy_configuration.xml \
     frameworks/av/services/audiopolicy/config/usb_audio_policy_configuration.xml:$(TARGET_COPY_OUT_VENDOR)/etc/usb_audio_policy_configuration.xml
 
-# Bluetooth / Display / DRM
+# Bluetooth
 PRODUCT_PACKAGES += \
     android.hardware.bluetooth-service.mediatek \
-    android.hardware.bluetooth.audio-impl \
-    android.hardware.memtrack-service.mediatek-mali \
-    ANGLE \
-    android.hardware.drm-service.clearkey \
-    fastbootd
+    android.hardware.bluetooth.audio-impl
 
+# Bootanimation
 TARGET_SCREEN_WIDTH := 1220
 TARGET_SCREEN_HEIGHT := 2712
 
-PRODUCT_PACKAGES += android.hardware.ir-service.example
+# ConsumerIr
+PRODUCT_PACKAGES += \
+    android.hardware.ir-service.example
+
+# Display
+PRODUCT_PACKAGES += \
+    android.hardware.memtrack-service.mediatek-mali
+
+PRODUCT_PACKAGES += \
+    ANGLE
 
 PRODUCT_COPY_FILES += \
     $(DEVICE_PATH)/configs/display_id_4627039422300187648.xml:$(TARGET_COPY_OUT_VENDOR)/etc/displayconfig/display_id_4627039422300187648.xml
 
+# DRM
+PRODUCT_PACKAGES += \
+    android.hardware.drm-service.clearkey
+
 # Dolby
 $(call inherit-product, hardware/dolby/dolby.mk)
+
+# Engineer Mode
+$(call inherit-product-if-exists, vendor/xiaomi/duchamp-engmode/vendor.mk)
+
+# Fastbootd
+PRODUCT_PACKAGES += \
+    fastbootd
 
 # Fingerprint
 $(call soong_config_set_bool,XIAOMI_BIOMETRICS_FINGERPRINT,USE_NEW_IMPL,true)
@@ -94,26 +133,36 @@ PRODUCT_PACKAGES += \
 # Health
 PRODUCT_PACKAGES += \
     android.hardware.health-service.mediatek \
-    android.hardware.health-service.mediatek-recovery \
-    vendor.lineage.health-service.default
+    android.hardware.health-service.mediatek-recovery
 
+# HotwordEnrollement app permissions
+PRODUCT_COPY_FILES += \
+    $(DEVICE_PATH)/configs/permissions/privapp-permissions-hotword.xml:$(TARGET_COPY_OUT_PRODUCT)/etc/permissions/privapp-permissions-hotword.xml
+
+# Linker
+PRODUCT_VENDOR_LINKER_CONFIG_FRAGMENTS += \
+    $(DEVICE_PATH)/configs/linker.config.json
+
+# Media
+PRODUCT_COPY_FILES += \
+    $(call find-copy-subdir-files,*,$(DEVICE_PATH)/configs/media,$(TARGET_COPY_OUT_VENDOR)/etc)
+
+# Lights
+PRODUCT_PACKAGES += \
+    android.hardware.light-service.lineage
+
+# Lineage Health
 $(call soong_config_set,lineage_health,charging_control_charging_disabled,1)
 $(call soong_config_set,lineage_health,charging_control_charging_enabled,0)
 $(call soong_config_set,lineage_health,charging_control_charging_path,/sys/class/power_supply/battery/input_suspend)
 $(call soong_config_set_bool,lineage_health,charging_control_supports_bypass,false)
 
-PRODUCT_COPY_FILES += \
-    $(DEVICE_PATH)/configs/permissions/privapp-permissions-hotword.xml:$(TARGET_COPY_OUT_PRODUCT)/etc/permissions/privapp-permissions-hotword.xml
+PRODUCT_PACKAGES += \
+    vendor.lineage.health-service.default
 
-PRODUCT_VENDOR_LINKER_CONFIG_FRAGMENTS += \
-    $(DEVICE_PATH)/configs/linker.config.json
-
-PRODUCT_COPY_FILES += \
-    $(call find-copy-subdir-files,*,$(DEVICE_PATH)/configs/media,$(TARGET_COPY_OUT_VENDOR)/etc)
-
-PRODUCT_PACKAGES += android.hardware.light-service.lineage
-
-PRODUCT_PACKAGES += MiuiCameraOverlayIcon
+# MiuiCamera Icon
+PRODUCT_PACKAGES += \
+    MiuiCameraOverlayIcon
 
 # NFC
 PRODUCT_PACKAGES += \
@@ -132,29 +181,37 @@ PRODUCT_COPY_FILES += \
     frameworks/native/data/etc/com.android.nfc_extras.xml:$(TARGET_COPY_OUT_ODM)/etc/permissions/com.android.nfc_extras.xml \
     frameworks/native/data/etc/com.nxp.mifare.xml:$(TARGET_COPY_OUT_ODM)/etc/permissions/com.nxp.mifare.xml
 
-# Device / Lineage overlays
+# Overlays
 PRODUCT_ENFORCE_RRO_TARGETS := *
+
 PRODUCT_PACKAGES += \
-    CarrierConfigOverlayDuchamp \
-    FrameworksResOverlayDuchamp \
-    PowerOffAlarmOverlayDuchamp \
-    NetworkStackOverlayDuchamp \
-    NfcOverlayDuchamp \
-    SettingsProviderOverlayDuchampPOCO \
-    SettingsProviderOverlayDuchampRedmi \
-    SettingsResOverlayDuchamp \
-    SystemUIOverlayDuchamp \
-    TelephonyResOverlayDuchamp \
-    TetheringResOverlayDuchamp \
-    WifiOverlay \
-    LineageApertureOverlayDuchamp \
-    LineageDialerDuchamp \
-    LineageSDKOverlayDuchamp \
-    LineageSettingsOverlayDuchamp
+   CarrierConfigOverlayDuchamp \
+   FrameworksResOverlayDuchamp \
+   PowerOffAlarmOverlayDuchamp \
+   NetworkStackOverlayDuchamp \
+   NfcOverlayDuchamp \
+   SettingsProviderOverlayDuchampPOCO \
+   SettingsProviderOverlayDuchampRedmi \
+   SettingsResOverlayDuchamp \
+   SystemUIOverlayDuchamp \
+   TelephonyResOverlayDuchamp \
+   TetheringResOverlayDuchamp \
+   WifiOverlay
 
-PRODUCT_PACKAGES += XiaomiParts
+PRODUCT_PACKAGES += \
+   LineageApertureOverlayDuchamp \
+   LineageDialerDuchamp \
+   LineageSDKOverlayDuchamp \
+   LineageSettingsOverlayDuchamp
 
+# Parts
+PRODUCT_PACKAGES += \
+    XiaomiParts
+
+# Page size
 PRODUCT_NO_BIONIC_PAGE_SIZE_MACRO := true
+
+# Partitions
 PRODUCT_USE_DYNAMIC_PARTITIONS := true
 
 # Permissions
@@ -200,6 +257,7 @@ PRODUCT_COPY_FILES += \
 
 # Power
 $(call soong_config_set,power_libperfmgr,mode_extension_lib, //$(DEVICE_PATH):libperfmgr-ext-xiaomi)
+
 PRODUCT_PACKAGES += \
     android.hardware.power-service.lineage-libperfmgr \
     libmtkperf_client_vendor \
@@ -210,7 +268,8 @@ PRODUCT_COPY_FILES += \
     $(DEVICE_PATH)/configs/powerhint.json:$(TARGET_COPY_OUT_VENDOR)/etc/powerhint.json
 
 # PowerOffAlarm
-PRODUCT_PACKAGES += PowerOffAlarm
+PRODUCT_PACKAGES += \
+    PowerOffAlarm
 
 # Properties
 include $(DEVICE_PATH)/vendor_logtag.mk
@@ -219,14 +278,19 @@ include $(DEVICE_PATH)/vendor_logtag.mk
 PRODUCT_COPY_FILES += \
     $(call find-copy-subdir-files,*,$(DEVICE_PATH)/configs/sku/,$(TARGET_COPY_OUT_ODM)/etc)
 
-# Radio / IMS
-PRODUCT_PACKAGES += vendor_mdota_symlink
+# Radio
+PRODUCT_PACKAGES += \
+    vendor_mdota_symlink
 
 PRODUCT_COPY_FILES += \
     $(call find-copy-subdir-files,*,$(DEVICE_PATH)/configs/rsc,$(TARGET_COPY_OUT_VENDOR)/etc/rsc)
 
-PRODUCT_BOOT_JARS += xiaomi-telephony-stub
-PRODUCT_PACKAGES += xiaomi-telephony-stub
+# Radio (IMS)
+PRODUCT_BOOT_JARS += \
+    xiaomi-telephony-stub
+
+PRODUCT_PACKAGES += \
+    xiaomi-telephony-stub
 
 PRODUCT_COPY_FILES += \
     $(DEVICE_PATH)/configs/permissions/mediatek-common.xml:$(TARGET_COPY_OUT_SYSTEM_EXT)/etc/permissions/mediatek-common.xml \
@@ -235,7 +299,9 @@ PRODUCT_COPY_FILES += \
     $(DEVICE_PATH)/configs/permissions/mediatek-ims-common.xml:$(TARGET_COPY_OUT_SYSTEM_EXT)/etc/permissions/mediatek-ims-common.xml \
     $(DEVICE_PATH)/configs/permissions/mediatek-telecom-common.xml:$(TARGET_COPY_OUT_SYSTEM_EXT)/etc/permissions/mediatek-telecom-common.xml \
     $(DEVICE_PATH)/configs/permissions/mediatek-telephony-base.xml:$(TARGET_COPY_OUT_SYSTEM_EXT)/etc/permissions/mediatek-telephony-base.xml \
-    $(DEVICE_PATH)/configs/permissions/mediatek-telephony-common.xml:$(TARGET_COPY_OUT_SYSTEM_EXT)/etc/permissions/mediatek-telephony-common.xml \
+    $(DEVICE_PATH)/configs/permissions/mediatek-telephony-common.xml:$(TARGET_COPY_OUT_SYSTEM_EXT)/etc/permissions/mediatek-telephony-common.xml
+
+PRODUCT_COPY_FILES += \
     $(DEVICE_PATH)/configs/permissions/privapp-permissions-com.mediatek.ims.xml:$(TARGET_COPY_OUT_SYSTEM_EXT)/etc/permissions/privapp-permissions-com.mediatek.ims.xml
 
 # Rootdir
@@ -256,28 +322,21 @@ PRODUCT_PACKAGES += \
 PRODUCT_COPY_FILES += \
     $(DEVICE_PATH)/rootdir/etc/init.recovery.mt6897.rc:$(TARGET_COPY_OUT_RECOVERY)/root/init.recovery.mt6897.rc
 
-# Sensors / thermal / USB / Wi-Fi
+# Sensors
 PRODUCT_PACKAGES += \
-    android.hardware.sensors-service.xiaomi-multihal \
-    sensors.xiaomi.v2 \
-    sensors.dynamic_sensor_hal \
-    android.hardware.thermal-service.pixel \
-    thermal_symlinks \
-    android.hardware.usb-service.mediatek \
-    android.hardware.usb.gadget-service.mediatek \
-    vndservicemanager \
-    vibratorfeature-wrapper \
-    android.hardware.wifi-service \
-    hostapd \
-    wpa_supplicant
+   android.hardware.sensors-service.xiaomi-multihal \
+   sensors.xiaomi.v2
+
+PRODUCT_PACKAGES += \
+   sensors.dynamic_sensor_hal
 
 PRODUCT_COPY_FILES += \
-    $(DEVICE_PATH)/configs/hals.conf:$(TARGET_COPY_OUT_VENDOR)/etc/sensors/hals.conf \
-    $(DEVICE_PATH)/configs/thermal_info_config.json:$(TARGET_COPY_OUT_VENDOR)/etc/thermal_info_config.json \
-    $(call find-copy-subdir-files,*,$(DEVICE_PATH)/configs/thermals/,$(TARGET_COPY_OUT_ODM)/etc)
+   $(DEVICE_PATH)/configs/hals.conf:$(TARGET_COPY_OUT_VENDOR)/etc/sensors/hals.conf
 
+# Shipping API level
 PRODUCT_SHIPPING_API_LEVEL := 34
 
+# Soong namespaces
 PRODUCT_SOONG_NAMESPACES += \
     $(DEVICE_PATH) \
     hardware/google/interfaces \
@@ -288,9 +347,46 @@ PRODUCT_SOONG_NAMESPACES += \
     hardware/mediatek/wlan/wifi_hal \
     hardware/xiaomi
 
+
+# Thermal files
+PRODUCT_COPY_FILES += \
+    $(call find-copy-subdir-files,*,$(DEVICE_PATH)/configs/thermals/,$(TARGET_COPY_OUT_ODM)/etc)
+
+# Thermal
+PRODUCT_PACKAGES += \
+    android.hardware.thermal-service.pixel \
+    thermal_symlinks
+
+PRODUCT_COPY_FILES += \
+    $(DEVICE_PATH)/configs/thermal_info_config.json:$(TARGET_COPY_OUT_VENDOR)/etc/thermal_info_config.json
+
+# USB
 $(call soong_config_set_bool,android_hardware_mediatek_usb,audio_accessory_supported,true)
+
+PRODUCT_PACKAGES += \
+    android.hardware.usb-service.mediatek \
+    android.hardware.usb.gadget-service.mediatek
+
+# Vendor service manager
+PRODUCT_PACKAGES += \
+    vndservicemanager
+
+# Vibrator
+PRODUCT_PACKAGES += \
+    vibratorfeature-wrapper
+
+# Wi-Fi
 $(call soong_config_set_bool,wpa_supplicant_8,board_wlan_mediatek_stability,true)
+PRODUCT_PACKAGES += \
+    android.hardware.wifi-service \
+    hostapd \
+    wpa_supplicant
+
 $(call soong_config_set_bool,wpa_supplicant_8,wifi_disable_multi_akm,true)
 
--include device/xiaomi/duchamp-miuicamera/device.mk
+# Include the keys.mk file
+-include vendor/lineage-priv/keys/keys.mk
+
+# Inherit the proprietary files
+$(call inherit-product-if-exists, device/xiaomi/duchamp-miuicamera/device.mk)
 $(call inherit-product, vendor/xiaomi/duchamp/duchamp-vendor.mk)
