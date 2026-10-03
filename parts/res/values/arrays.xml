@@ -1,0 +1,308 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     Copyright (C) 2021 The LineageOS Project
+
+     Licensed under the Apache License, Version 2.0 (the "License");
+     you may not use this file except in compliance with the License.
+     You may obtain a copy of the License at
+
+          http://www.apache.org/licenses/LICENSE-2.0
+
+     Unless required by applicable law or agreed to in writing, software
+     distributed under the License is distributed on an "AS IS" BASIS,
+     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+     See the License for the specific language governing permissions and
+     limitations under the License.
+-->
+<resources>
+
+    <string-array name="turbo_modes_entries">
+        <item>@string/turbo_mode_one</item>
+        <item>@string/turbo_mode_two</item>
+        <item>@string/turbo_mode_three</item>
+    </string-array>
+
+    <string-array name="turbo_modes_values">
+        <item>4800000</item>
+        <item>7000000</item>
+        <item>22000000</item>
+    </string-array>
+    <string-array name="game_packages">
+         <item>com.proximabeta.mf.uamo</item>
+         <item>com.dts.freefiremax</item>
+         <item>com.dts.freefireth</item>
+         <item>com.mobile.legends</item>
+         <item>com.tencent.KiHan</item>
+         <item>com.tencent.tmgp.cf</item>
+         <item>com.tencent.tmgp.cod</item>
+         <item>com.tencent.tmgp.gnyx</item>
+         <item>com.ea.gp.apexlegendsmobilefps</item>
+         <item>com.levelinfinite.hotta.gp</item>
+         <item>com.supercell.brawlstars</item>
+         <item>com.supercell.clashofclans</item>
+         <item>com.vng.mlbbvn</item>
+         <item>com.levelinfinite.sgameGlobal</item>
+         <item>com.tencent.tmgp.sgame</item>
+         <item>com.YoStar.AetherGazer</item>
+         <item>com.netease.lztgglobal</item>
+         <item>com.riotgames.league.wildrift</item>
+         <item>com.riotgames.league.wildrifttw</item>
+         <item>com.riotgames.league.wildriftvn</item>
+         <item>com.epicgames.fortnite</item>
+         <item>com.epicgames.portal</item>
+         <item>com.tencent.lolm</item>
+         <item>jp.konami.pesam</item>
+         <item>com.ea.gp.fifamobile</item>
+         <item>com.pearlabyss.blackdesertm.gl</item>
+         <item>com.pearlabyss.blackdesertm</item>
+         <item>com.gameloft.android.ANMP.GloftA9HM</item>
+         <item>com.madfingergames.legends</item>
+         <item>com.riotgames.league.teamfighttactics</item>
+         <item>com.riotgames.league.teamfighttacticstw</item>
+         <item>com.riotgames.league.teamfighttacticsvn</item>
+         <item>com.pubg.imobile</item>
+         <item>com.pubg.krmobile</item>
+         <item>com.rekoo.pubgm</item>
+         <item>com.tencent.ig</item>
+         <item>com.tencent.tmgp.pubgmhd</item>
+         <item>com.vng.pubgmobile</item>
+         <item>com.activision.callofduty.shooter</item>
+         <item>com.garena.game.codm</item>
+         <item>com.tencent.tmgp.kr.codm</item>
+         <item>com.vng.codmvn</item>
+         <item>com.miHoYo.GenshinImpact</item>
+         <item>com.kurogame.wutheringwaves</item>
+    </string-array>
+    <!-- GPU Frequency Options (Common Higher Frequencies) -->
+    <string-array name="gpu_frequency_entries" translatable="false">
+        <item>265MHz</item>
+        <item>502MHz</item>
+        <item>701MHz</item>
+        <item>852MHz</item>
+        <item>981MHz</item>
+        <item>1140MHz</item>
+        <item>1271MHz</item>
+        <item>1400MHz</item>
+    </string-array>
+
+    <string-array name="gpu_frequency_values" translatable="false">
+        <item>265000000</item>
+        <item>502000000</item>
+        <item>701000000</item>
+        <item>852000000</item>
+        <item>981000000</item>
+        <item>1142000000</item>
+        <item>1271000000</item>
+        <item>1400000000</item>
+    </string-array>
+
+<!-- CPU Little Cluster Frequencies -->
+<string-array name="cpu_little_freq_entries" translatable="false">
+    <item>480MHz</item>
+    <item>600MHz</item>
+    <item>700MHz</item>
+    <item>800MHz</item>
+    <item>900MHz</item>
+    <item>1000MHz</item>
+    <item>1100MHz</item>
+    <item>1200MHz</item>
+    <item>1300MHz</item>
+    <item>1400MHz</item>
+    <item>1500MHz</item>
+    <item>1600MHz</item>
+    <item>1700MHz</item>
+    <item>1800MHz</item>
+    <item>1900MHz</item>
+    <item>2000MHz</item>
+    <item>2100MHz</item>
+    <item>2200MHz</item>
+</string-array>
+<string-array name="cpu_little_freq_values" translatable="false">
+    <item>480000</item>
+    <item>600000</item>
+    <item>700000</item>
+    <item>800000</item>
+    <item>900000</item>
+    <item>1000000</item>
+    <item>1100000</item>
+    <item>1200000</item>
+    <item>1300000</item>
+    <item>1400000</item>
+    <item>1500000</item>
+    <item>1600000</item>
+    <item>1700000</item>
+    <item>1800000</item>
+    <item>1900000</item>
+    <item>2000000</item>
+    <item>2100000</item>
+    <item>2200000</item>
+</string-array>
+
+
+<!-- CPU Big Cluster Frequencies -->
+<string-array name="cpu_big_freq_entries" translatable="false">
+    <item>400MHz</item>
+    <item>500MHz</item>
+    <item>600MHz</item>
+    <item>700MHz</item>
+    <item>800MHz</item>
+    <item>900MHz</item>
+    <item>1000MHz</item>
+    <item>1100MHz</item>
+    <item>1200MHz</item>
+    <item>1300MHz</item>
+    <item>1400MHz</item>
+    <item>1500MHz</item>
+    <item>1600MHz</item>
+    <item>1700MHz</item>
+    <item>1800MHz</item>
+    <item>1900MHz</item>
+    <item>2000MHz</item>
+    <item>2100MHz</item>
+    <item>2200MHz</item>
+    <item>2300MHz</item>
+    <item>2400MHz</item>
+    <item>2500MHz</item>
+    <item>2600MHz</item>
+    <item>2660MHz</item>
+    <item>2800MHz</item>
+    <item>2850MHz</item>
+    <item>2900MHz</item>
+    <item>3000MHz</item>
+    <item>3100MHz</item>
+    <item>3200MHz</item>
+</string-array>
+<string-array name="cpu_big_freq_values" translatable="false">
+    <item>400000</item>
+    <item>500000</item>
+    <item>600000</item>
+    <item>700000</item>
+    <item>800000</item>
+    <item>900000</item>
+    <item>1000000</item>
+    <item>1100000</item>
+    <item>1200000</item>
+    <item>1300000</item>
+    <item>1400000</item>
+    <item>1500000</item>
+    <item>1600000</item>
+    <item>1700000</item>
+    <item>1800000</item>
+    <item>1900000</item>
+    <item>2000000</item>
+    <item>2100000</item>
+    <item>2200000</item>
+    <item>2300000</item>
+    <item>2400000</item>
+    <item>2500000</item>
+    <item>2600000</item>
+    <item>2660000</item>
+    <item>2800000</item>
+    <item>2850000</item>
+    <item>2900000</item>
+    <item>3000000</item>
+    <item>3100000</item>
+    <item>3200000</item>
+</string-array>
+
+ 
+ <!-- CPU Prime Cluster Frequencies -->
+<string-array name="cpu_prime_freq_entries" translatable="false">
+    <item>400MHz</item>
+    <item>500MHz</item>
+    <item>600MHz</item>
+    <item>700MHz</item>
+    <item>800MHz</item>
+    <item>900MHz</item>
+    <item>1000MHz</item>
+    <item>1100MHz</item>
+    <item>1200MHz</item>
+    <item>1300MHz</item>
+    <item>1400MHz</item>
+    <item>1500MHz</item>
+    <item>1600MHz</item>
+    <item>1700MHz</item>
+    <item>1800MHz</item>
+    <item>1900MHz</item>
+    <item>2000MHz</item>
+    <item>2100MHz</item>
+    <item>2200MHz</item>
+    <item>2300MHz</item>
+    <item>2400MHz</item>
+    <item>2500MHz</item>
+    <item>2600MHz</item>
+    <item>2700MHz</item>
+    <item>2800MHz</item>
+    <item>2900MHz</item>
+    <item>3000MHz</item>
+    <item>3050MHz</item>
+    <item>3100MHz</item>
+    <item>3200MHz</item>
+    <item>3350MHz</item>
+</string-array>
+<string-array name="cpu_prime_freq_values" translatable="false">
+    <item>400000</item>
+    <item>500000</item>
+    <item>600000</item>
+    <item>700000</item>
+    <item>800000</item>
+    <item>900000</item>
+    <item>1000000</item>
+    <item>1100000</item>
+    <item>1200000</item>
+    <item>1300000</item>
+    <item>1400000</item>
+    <item>1500000</item>
+    <item>1600000</item>
+    <item>1700000</item>
+    <item>1800000</item>
+    <item>1900000</item>
+    <item>2000000</item>
+    <item>2100000</item>
+    <item>2200000</item>
+    <item>2300000</item>
+    <item>2400000</item>
+    <item>2500000</item>
+    <item>2600000</item>
+    <item>2700000</item>
+    <item>2800000</item>
+    <item>2900000</item>
+    <item>3000000</item>
+    <item>3050000</item>
+    <item>3100000</item>
+    <item>3200000</item>
+    <item>3350000</item>
+</string-array>
+
+ 
+    <!-- CPU Governor Options (for all clusters) -->
+    <string-array name="cpu_governor_entries" translatable="false">
+         <item>conservative</item>
+         <item>powersave</item>
+         <item>performance</item>
+         <item>schedutil</item>
+    </string-array>
+    <string-array name="cpu_governor_values" translatable="false">
+         <item>conservative</item>
+         <item>powersave</item>
+         <item>performance</item>
+         <item>schedutil</item>
+    </string-array>
+
+    <!-- Power Profile Modes -->
+    <string-array name="power_profile_modes" translatable="false">
+         <item>Balanced</item>
+         <item>Gaming</item>
+         <item>Performance</item>
+         <item>Battery Saver</item>
+         <item>Unknown</item>
+    </string-array>
+    <string-array name="power_profile_mode_values" translatable="false">
+         <item>0</item>
+         <item>1</item>
+         <item>2</item>
+         <item>3</item>
+         <item>4</item>
+    </string-array>
+
+</resources>
