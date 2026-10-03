@@ -1,0 +1,160 @@
+name: WeaR OS ROM Build
+
+on:
+  workflow_dispatch:
+    inputs:
+      build_product:
+        description: Product to build
+        required: true
+        type: choice
+        default: wear_duchamp-userdebug
+        options:
+          - wear_duchamp-userdebug
+          - lineage_duchamp-userdebug
+      wear_ref:
+        description: WeaR OS commit SHA (use main for development)
+        required: true
+        default: main
+        type: string
+      jobs:
+        description: Android build parallelism
+        required: true
+        default: "2"
+        type: string
+      clean_build:
+        description: Delete out/ before compiling
+        required: true
+        default: false
+        type: boolean
+      publish_release:
+        description: Publish the flashable OTA ZIP as a GitHub Release asset
+        required: true
+        default: false
+        type: boolean
+      release_tag:
+        description: Required only when publish_release is true
+        required: false
+        default: ""
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: wear-rom-build
+  cancel-in-progress: false
+
+jobs:
+  build:
+    # The label is intentionally custom. Register the self-hosted machine with
+    # self-hosted, linux, x64, wearos-build labels.
+    runs-on: [self-hosted, linux, x64, wearos-build]
+    timeout-minutes: 2160
+
+    steps:
+      - name: Checkout WeaR OS
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Validate repository
+        run: bash scripts/validate.sh
+
+      - name: Validate build host
+        run: bash scripts/host-check.sh
+
+      - name: Check required build tools
+        shell: bash
+        run: |
+          set -euo pipefail
+          for tool in git repo python3 curl zip unzip rsync ccache sha256sum; do
+            command -v "$tool" >/dev/null 2>&1 || {
+              echo "ERROR: required tool not found: $tool" >&2
+              exit 1
+            }
+          done
+          echo "Required build tools are present."
+
+      - name: Configure persistent build cache
+        shell: bash
+        run: |
+          set -euo pipefail
+          export CCACHE_DIR="${CCACHE_DIR:-$HOME/.cache/ccache-wear}"
+          echo "CCACHE_DIR=$CCACHE_DIR" >> "$GITHUB_ENV"
+          mkdir -p "$CCACHE_DIR"
+          ccache -M 40G
+          ccache -z
+
+      - name: Synchronize Android source
+        shell: bash
+        env:
+          ANDROID_DIR: ${{ runner.workspace }}/android-source
+          WEAR_REF: ${{ inputs.wear_ref }}
+          JOBS: ${{ inputs.jobs }}
+          FORCE_SYNC: "0"
+        run: bash scripts/sync.sh
+
+      - name: Verify synchronized source
+        shell: bash
+        env:
+          ANDROID_DIR: ${{ runner.workspace }}/android-source
+          WEAR_REF: ${{ inputs.wear_ref }}
+        run: bash scripts/verify-source.sh
+
+      - name: Clean previous Android output
+        if: ${{ inputs.clean_build }}
+        shell: bash
+        env:
+          ANDROID_DIR: ${{ runner.workspace }}/android-source
+        run: rm -rf "$ANDROID_DIR/out"
+
+      - name: Build ROM
+        shell: bash
+        env:
+          ANDROID_DIR: ${{ runner.workspace }}/android-source
+          BUILD_PRODUCT: ${{ inputs.build_product }}
+          JOBS: ${{ inputs.jobs }}
+        run: bash scripts/build.sh
+
+      - name: Collect ROM artifacts
+        shell: bash
+        env:
+          ANDROID_DIR: ${{ runner.workspace }}/android-source
+          BUILD_PRODUCT: ${{ inputs.build_product }}
+          WEAR_REF: ${{ inputs.wear_ref }}
+        run: bash scripts/collect-artifacts.sh
+
+      - name: Upload build metadata
+        uses: actions/upload-artifact@v7
+        with:
+          name: wear-os-build-metadata-${{ github.run_number }}
+          path: ${{ runner.workspace }}/android-source/wear-artifacts/
+          retention-days: 7
+          if-no-files-found: error
+
+      - name: Publish ROM release
+        if: ${{ inputs.publish_release }}
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ inputs.release_tag }}
+          BUILD_PRODUCT: ${{ inputs.build_product }}
+        run: |
+          set -euo pipefail
+          [[ -n "$RELEASE_TAG" ]] || { echo "release_tag is required" >&2; exit 1; }
+          [[ "$RELEASE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z.-]+)?$ ]] || {
+            echo "Invalid release tag: $RELEASE_TAG" >&2
+            exit 1
+          }
+          ROM="$(find "$ANDROID_DIR/wear-artifacts" -maxdepth 1 -type f -name '*.zip' -print -quit)"
+          [[ -n "$ROM" ]] || { echo "No flashable OTA ZIP found" >&2; exit 1; }
+          gh release create "$RELEASE_TAG" "$ROM" "$ANDROID_DIR/wear-artifacts/SHA256SUMS" "$ANDROID_DIR/wear-artifacts/source-manifest.xml" \
+            --title "WeaR OS $RELEASE_TAG" \
+            --generate-notes \
+            --target "${GITHUB_SHA}"
+
+      - name: Show ccache statistics
+        if: always()
+        shell: bash
+        run: ccache -s || true
