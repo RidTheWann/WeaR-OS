@@ -132,6 +132,7 @@ jobs:
         shell: bash
         env:
           ANDROID_DIR: ${{ runner.workspace }}/android-source
+          LINEAGE_REF: ${{ inputs.lineage_ref }}
           WEAR_REF: ${{ inputs.wear_ref }}
         run: bash scripts/verify-source.sh
 
@@ -155,6 +156,7 @@ jobs:
         env:
           ANDROID_DIR: ${{ runner.workspace }}/android-source
           BUILD_PRODUCT: ${{ inputs.build_product }}
+          LINEAGE_REF: ${{ inputs.lineage_ref }}
           WEAR_REF: ${{ inputs.wear_ref }}
         run: bash scripts/collect-artifacts.sh
 
