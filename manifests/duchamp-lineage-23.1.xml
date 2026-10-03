@@ -5,6 +5,13 @@
 
     <remote name="github" fetch="https://github.com/" />
 
+    <!-- WeaR product/configuration tree. -->
+    <project
+        path="vendor/wear"
+        name="RidTheWann/WeaR-OS"
+        remote="github"
+        revision="main" />
+
     <!-- Device tree supplied for WeaR OS bring-up. -->
     <project
         path="device/xiaomi/duchamp"
