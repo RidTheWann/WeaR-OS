@@ -213,6 +213,26 @@ jobs:
             --generate-notes \
             --target "${GITHUB_SHA}"
 
+      - name: Build summary
+        if: always()
+        shell: bash
+        env:
+          STACK: ${{ inputs.stack }}
+          LINEAGE_REF: ${{ inputs.lineage_ref }}
+          WEAR_REF: ${{ inputs.wear_ref }}
+          BUILD_PRODUCT: ${{ inputs.build_product }}
+        run: |
+          {
+            echo "## WeaR OS build"
+            echo ""
+            echo "| Setting | Value |"
+            echo "|---|---|"
+            echo "| Stack | `$STACK` |"
+            echo "| Build product | `$BUILD_PRODUCT` |"
+            echo "| Lineage ref | `$LINEAGE_REF` |"
+            echo "| WeaR ref | `$WEAR_REF` |"
+          } >> "$GITHUB_STEP_SUMMARY"
+
       - name: Show ccache statistics
         if: always()
         shell: bash
