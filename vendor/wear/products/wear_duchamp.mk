@@ -7,7 +7,8 @@
 # inherited into WeaR OS.
 
 # The duchamp device configuration uses WITH_GMS to select the stock-compatible
-# EROFS + Virtual A/B path. This flag does not add Google applications by itself.
+# EROFS + Virtual A/B path. Lineage telephony also observes this flag; GMS
+# packages are only supplied when an appropriate partner-GMS project is present.
 WITH_GMS := true
 
 # AOSP product foundations
