@@ -61,6 +61,13 @@ jobs:
           grep -q 'vendor/xiaomi/duchamp/duchamp-vendor.mk' device.mk
           grep -q '50f301982df14af45af137ba87c565a459a7e65c' README.md
 
+      - name: Validate ROM build workflow
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f .github/workflows/rom-build.yml
+          ! grep -R -n '\\${{' .github/workflows
+          grep -q 'lunch "wear_duchamp-${BUILD_TYPE}"' .github/workflows/rom-build.yml
       - name: Check repository hygiene
         shell: bash
         run: |
