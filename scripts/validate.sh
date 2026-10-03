@@ -57,7 +57,7 @@ grep -q '7d408383a8f199ba9a72e8a3b4314c6d848b459c' scripts/sync.sh
 
 echo "==> Repository hygiene"
 test ! -d vendor/wear/products/vendor
-if find . -type f \\( -name '*.img' -o -name '*.bin' -o -name '*.so' -o -name '*.apk' \\) | grep -q .; then
+if find . -type f \( -name '*.img' -o -name '*.bin' -o -name '*.so' -o -name '*.apk' \) -not -path './.git/*' | grep -q .; then
     echo "ERROR: binary/proprietary artifacts found in WeaR-OS repository" >&2
     exit 1
 fi
