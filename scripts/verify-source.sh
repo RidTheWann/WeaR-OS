@@ -37,6 +37,34 @@ else
     WEAR_REF="${WEAR_REF:-}"
 fi
 
+resolve_project_ref() {
+    local path="$1"
+    local expected="$2"
+    local resolved=""
+
+    if resolved="$(git -C "$path" rev-parse "$expected^{commit}" 2>/dev/null)"; then
+        printf '%s\n' "$resolved"
+        return 0
+    fi
+
+    if [[ "$expected" =~ ^[0-9a-fA-F]{40}$ ]]; then
+        if resolved="$(git -C "$path" cat-file -t "$expected" 2>/dev/null)" && [[ "$resolved" == "commit" ]]; then
+            printf '%s\n' "$expected"
+            return 0
+        fi
+    fi
+
+    while IFS= read -r remote; do
+        [[ -n "$remote" ]] || continue
+        if resolved="$(git -C "$path" rev-parse "$remote/$expected^{commit}" 2>/dev/null)"; then
+            printf '%s\n' "$resolved"
+            return 0
+        fi
+    done < <(git -C "$path" remote)
+
+    return 1
+}
+
 verify_repo() {
     local path="$1"
     local expected="$2"
@@ -50,11 +78,8 @@ verify_repo() {
 
     actual="$(git -C "$path" rev-parse HEAD)"
 
-    # A revision in the local manifest may be a branch, tag, or SHA.
-    # Resolve it in the target repo so the same verifier works for development
-    # and release manifests.
     local resolved
-    if ! resolved="$(git -C "$path" rev-parse "$expected^{commit}" 2>/dev/null)"; then
+    if ! resolved="$(resolve_project_ref "$path" "$expected")"; then
         echo "UNRESOLVED $path @ $expected"
         failures=$((failures + 1))
         return
