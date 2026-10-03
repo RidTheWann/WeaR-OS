@@ -15,7 +15,24 @@ else
     ANDROID_DIR="${ANDROID_DIR:-$ROOT_DIR/..}"
 fi
 
-JOBS="${JOBS:-4}"
+if [[ -z "${JOBS:-}" ]]; then
+    CPU_COUNT="$(nproc 2>/dev/null || printf '2')"
+    RAM_GB="$(awk '/MemTotal:/ {printf "%d", $2 / 1024 / 1024}' /proc/meminfo 2>/dev/null || printf '0')"
+
+    if (( RAM_GB >= 64 )); then
+        JOBS="$CPU_COUNT"
+    elif (( RAM_GB >= 32 )); then
+        JOBS="$CPU_COUNT"
+        (( JOBS > 8 )) && JOBS=8
+    elif (( RAM_GB >= 16 )); then
+        JOBS=2
+    else
+        JOBS=1
+    fi
+else
+    JOBS="$JOBS"
+fi
+
 BUILD_PRODUCT="${BUILD_PRODUCT:-wear_duchamp-userdebug}"
 
 cd "$ANDROID_DIR"
