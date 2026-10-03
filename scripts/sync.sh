@@ -15,10 +15,10 @@ else
     ANDROID_DIR="${ANDROID_DIR:-$ROOT_DIR/..}"
 fi
 
-STACK="${STACK:-23.2-current}"
+STACK="${STACK:-23.1-snapboss}"
 
 case "$STACK" in
-    23.2-current)
+    23.2-experimental)
         MANIFEST_TEMPLATE="$ROOT_DIR/manifests/duchamp-lineage-23.2.xml"
         DEFAULT_LINEAGE_REF="eabe68377217a88c81fa933db0136ea4146ff369"
         ;;
@@ -28,7 +28,7 @@ case "$STACK" in
         ;;
     *)
         echo "ERROR: unsupported STACK='$STACK'." >&2
-        echo "Supported values: 23.2-current, 23.1-snapboss" >&2
+        echo "Supported values: 23.1-snapboss, 23.2-experimental" >&2
         exit 1
         ;;
 esac
