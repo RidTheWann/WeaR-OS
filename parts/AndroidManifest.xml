@@ -1,0 +1,255 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     Copyright (C) 2015-2016 The CyanogenMod Project
+                   2017-2018 The LineageOS Project
+
+     Licensed under the Apache License, Version 2.0 (the "License");
+     you may not use this file except in compliance with the License.
+     You may obtain a copy of the License at
+
+          http://www.apache.org/licenses/LICENSE-2.0
+
+     Unless required by applicable law or agreed to in writing, software
+     distributed under the License is distributed on an "AS IS" BASIS,
+     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+     See the License for the specific language governing permissions and
+     limitations under the License.
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    package="org.lineageos.settings"
+    android:versionCode="1"
+    android:versionName="1.0"
+    android:sharedUserId="android.uid.system">
+
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.GET_TASKS" />
+    <uses-permission android:name="android.permission.ACCESS_SURFACE_FLINGER" />
+    <uses-permission android:name="android.permission.WRITE_SECURE_SETTINGS"/>
+    <uses-permission android:name="android.permission.INTERACT_ACROSS_USERS_FULL" />
+    <uses-permission android:name="android.permission.WRITE_SETTINGS" />
+    
+    <protected-broadcast android:name="com.android.systemui.doze.pulse" />
+
+    <uses-sdk
+        android:minSdkVersion="24"
+        android:targetSdkVersion="30"/>
+
+    <application
+        android:label="@string/app_title"
+        android:icon="@drawable/ic_xiaomiparts"
+        android:persistent="true"
+        android:defaultToDeviceProtectedStorage="true"
+        android:directBootAware="true"
+        android:theme="@style/Theme.SubSettingsBase">
+
+        <receiver
+            android:name=".BootCompletedReceiver"
+            android:exported="true"
+            android:permission="android.permission.RECEIVE_BOOT_COMPLETED">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.LOCKED_BOOT_COMPLETED" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </receiver>
+
+        <provider
+            android:name="androidx.startup.InitializationProvider"
+            android:authorities="${applicationId}.androidx-startup"
+            tools:replace="android:authorities"/>
+
+        <receiver
+            android:name=".Startup"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.LOCKED_BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
+
+        <activity
+    android:name=".corecontrol.CoreControlActivity"
+    android:label="@string/core_control_title"
+    android:exported="true"> <!-- or false depending on your needs -->
+    <intent-filter>
+        <action android:name="com.android.settings.action.IA_SETTINGS" />
+    </intent-filter>
+    <meta-data
+        android:name="com.android.settings.category"
+        android:value="com.android.settings.category.ia.battery" />
+    <meta-data
+        android:name="com.android.settings.summary"
+        android:resource="@string/core_control_summary" />
+       </activity>        
+
+        <!-- Thermal Profiles tile service -->
+                <service
+            android:name=".thermal.ThermalProfileTileService"
+            android:icon="@drawable/ic_thermal_tile"
+            android:label="@string/thermalprofile_title"
+            android:exported="true"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE"/>
+            </intent-filter>
+        </service>
+
+        <activity
+            android:name=".speaker.ClearSpeakerActivity" 
+            android:label="@string/clear_speaker_title">
+            <intent-filter>
+                <action android:name="com.android.settings.action.IA_SETTINGS" />
+            </intent-filter>
+            <meta-data
+                android:name="com.android.settings.category"
+                android:value="com.android.settings.category.ia.sound" />
+            <meta-data
+                android:name="com.android.settings.summary"
+                android:resource="@string/clear_speaker_summary" />
+        </activity>
+
+        <activity
+            android:name=".refreshrate.RefreshActivity"
+            android:label="@string/refresh_title"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.android.settings.action.IA_SETTINGS" />
+            </intent-filter>
+            <meta-data
+                android:name="com.android.settings.category"
+                android:value="com.android.settings.category.ia.display" />
+            <meta-data
+                android:name="com.android.settings.summary"
+                android:resource="@string/refresh_summary" />
+        </activity>
+
+        <service
+            android:name=".refreshrate.RefreshService"
+            android:exported="true"
+            android:permission="RefreshService">
+        </service>
+
+        <!-- Display Saturation activity -->
+        <activity
+            android:name=".saturation.SaturationActivity"
+            android:label="@string/saturation_title"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.android.settings.action.IA_SETTINGS" />
+            </intent-filter>
+            <meta-data
+                android:name="com.android.settings.category"
+                android:value="com.android.settings.category.ia.display" />
+            <meta-data
+                android:name="com.android.settings.summary"
+                android:resource="@string/saturation_summary" />
+        </activity>
+
+        <!-- Display Saturation tile service -->
+        <service  
+            android:name=".saturation.SaturationTileService"
+            android:label="@string/saturation_title"
+            android:icon="@drawable/ic_saturation_tile"
+            android:exported="true"  
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+            <meta-data android:name="android.service.quicksettings.TOGGLEABLE_TILE"
+                android:value="true" />
+        </service>
+
+        <!-- Displayfeature color service -->
+        <service
+            android:name=".display.ColorModeService"
+            android:permission="ColorModeService">
+        </service>
+
+        <!-- Pocketservice service -->
+        <service
+            android:name=".doze.PocketService"
+            android:permission="PocketService">
+        </service>
+
+        <!-- Hightouch Sampling Service -->
+        <service
+            android:name=".touchsampling.TouchSamplingService"
+            android:permission="android.permission.BIND_JOB_SERVICE"
+            android:exported="false">
+        </service>
+
+        <!-- Touch Sampling Tile Service -->
+        <service
+            android:name=".touchsampling.TouchSamplingTileService"
+            android:label="@string/touch_sampling_tile_label"
+            android:icon="@drawable/ic_touch_sampling_tile"
+            android:exported="true"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.service.quicksettings.TOGGLEABLE_TILE"
+                android:value="true" />
+        </service>
+
+        <!-- Touch Sampling AppSelector -->
+        <activity
+            android:name=".touchsampling.TouchSamplingPerAppConfigActivity"
+            android:exported="false"
+            android:theme="@style/Theme.SubSettingsBase" />
+
+        <!-- Tile Entry Activity -->
+        <activity
+            android:name=".TileEntryActivity"
+            android:label="@string/app_title"
+            android:exported="true"
+            android:theme="@style/Theme.SubSettingsBase">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE_PREFERENCES" />
+            </intent-filter>
+        </activity>
+
+       <!-- Touch Sampling settings activity -->
+        <activity
+            android:name=".touchsampling.TouchSamplingSettingsActivity"
+            android:label="@string/htsr_title"
+            android:theme="@style/Theme.SubSettingsBase"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.android.settings.action.IA_SETTINGS" />
+            </intent-filter>
+            <meta-data
+                android:name="com.android.settings.category"
+                android:value="com.android.settings.category.ia.display" />
+            <meta-data
+                android:name="com.android.settings.summary"
+                android:resource="@string/htsr_enable_summary" />
+        </activity>
+
+        <!-- Turbo Charging -->
+        <activity
+            android:name=".turbocharging.TurboChargingActivity"
+            android:exported="false"
+            android:label="@string/turbo_charge_title"
+            android:theme="@style/Theme.SubSettingsBase">
+            <intent-filter>
+                <action android:name="com.android.settings.action.IA_SETTINGS" />
+            </intent-filter>
+            <meta-data
+                android:name="com.android.settings.category"
+                android:value="com.android.settings.category.ia.battery" />
+            <meta-data
+                android:name="com.android.settings.summary"
+                android:resource="@string/turbo_charge_summary" />
+        </activity>
+
+        <service
+            android:name=".turbocharging.TurboChargingService"
+            android:permission="TurboChargingService">
+        </service>
+
+    </application>
+</manifest>
