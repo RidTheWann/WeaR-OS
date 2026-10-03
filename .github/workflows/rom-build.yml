@@ -17,7 +17,7 @@ on:
         default: main
         type: string
       jobs:
-        description: Android build parallelism
+        description: Android build parallelism (1-64)
         required: true
         default: "2"
         type: string
@@ -51,7 +51,27 @@ jobs:
     runs-on: [self-hosted, linux, x64, wearos-build]
     timeout-minutes: 2160
 
+    permissions:
+      contents: write
+
     steps:
+      - name: Validate inputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "${{ inputs.jobs }}" =~ ^[1-9][0-9]?$ ]] || {
+            echo "jobs must be an integer from 1 to 64" >&2
+            exit 1
+          }
+          (( ${{ inputs.jobs }} <= 64 )) || {
+            echo "jobs must be an integer from 1 to 64" >&2
+            exit 1
+          }
+          if [[ "${{ inputs.publish_release }}" == "true" && -z "${{ inputs.release_tag }}" ]]; then
+            echo "release_tag is required when publish_release=true" >&2
+            exit 1
+          fi
+
       - name: Checkout WeaR OS
         uses: actions/checkout@v7
         with:
@@ -129,7 +149,10 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: wear-os-build-metadata-${{ github.run_number }}
-          path: ${{ runner.workspace }}/android-source/wear-artifacts/
+          path: |
+            ${{ runner.workspace }}/android-source/wear-artifacts/build-info.txt
+            ${{ runner.workspace }}/android-source/wear-artifacts/SHA256SUMS
+            ${{ runner.workspace }}/android-source/wear-artifacts/source-manifest.xml
           retention-days: 7
           if-no-files-found: error
 
@@ -138,6 +161,7 @@ jobs:
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
+          ANDROID_DIR: ${{ runner.workspace }}/android-source
           RELEASE_TAG: ${{ inputs.release_tag }}
           BUILD_PRODUCT: ${{ inputs.build_product }}
         run: |
