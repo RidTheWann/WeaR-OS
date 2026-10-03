@@ -16,7 +16,7 @@ else
 fi
 
 JOBS="${JOBS:-4}"
-BUILD_PRODUCT="${BUILD_PRODUCT:-lineage_duchamp-userdebug}"
+BUILD_PRODUCT="${BUILD_PRODUCT:-wear_duchamp-userdebug}"
 
 cd "$ANDROID_DIR"
 
