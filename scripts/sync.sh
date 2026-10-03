@@ -15,7 +15,25 @@ else
     ANDROID_DIR="${ANDROID_DIR:-$ROOT_DIR/..}"
 fi
 
-LINEAGE_REF="${LINEAGE_REF:-lineage-23.1}"
+STACK="${STACK:-23.2-current}"
+
+case "$STACK" in
+    23.2-current)
+        MANIFEST_TEMPLATE="$ROOT_DIR/manifests/duchamp-lineage-23.2.xml"
+        DEFAULT_LINEAGE_REF="lineage-23.2"
+        ;;
+    23.1-snapboss)
+        MANIFEST_TEMPLATE="$ROOT_DIR/manifests/duchamp-lineage-23.1.xml"
+        DEFAULT_LINEAGE_REF="lineage-23.1"
+        ;;
+    *)
+        echo "ERROR: unsupported STACK='$STACK'." >&2
+        echo "Supported values: 23.2-current, 23.1-snapboss" >&2
+        exit 1
+        ;;
+esac
+
+LINEAGE_REF="${LINEAGE_REF:-$DEFAULT_LINEAGE_REF}"
 JOBS="${JOBS:-4}"
 WEAR_REF="${WEAR_REF:-main}"
 
@@ -33,9 +51,7 @@ repo init -u https://github.com/LineageOS/android.git \
 mkdir -p .repo/local_manifests
 MANIFEST_OUT=".repo/local_manifests/wear-duchamp.xml"
 
-# Render the local manifest with an explicit WeaR revision. Development defaults
-# to main; release builds should pass an immutable commit SHA.
-python3 - "$ROOT_DIR/manifests/duchamp-lineage-23.1.xml" "$MANIFEST_OUT" "$WEAR_REF" <<'PY'
+python3 - "$MANIFEST_TEMPLATE" "$MANIFEST_OUT" "$WEAR_REF" <<'PY'
 from pathlib import Path
 import sys
 
@@ -52,7 +68,7 @@ replacement = f'''name="RidTheWann/WeaR-OS"
         revision="{wear_ref}"'''
 
 if needle not in data:
-    raise SystemExit("ERROR: WeaR project entry was not found in the manifest template.")
+    raise SystemExit("ERROR: WeaR project entry was not found in the selected manifest template.")
 
 dst.write_text(data.replace(needle, replacement, 1), encoding="utf-8")
 PY
@@ -68,7 +84,11 @@ if [[ "${FORCE_SYNC:-0}" == "1" ]]; then
     SYNC_ARGS+=("--force-sync")
 fi
 
-echo "==> Syncing LineageOS $LINEAGE_REF with WeaR ref $WEAR_REF"
+echo "==> WeaR stack : $STACK"
+echo "==> Lineage ref: $LINEAGE_REF"
+echo "==> WeaR ref   : $WEAR_REF"
+echo "==> Sync jobs  : $JOBS"
+
 repo sync "${SYNC_ARGS[@]}"
 
 echo
