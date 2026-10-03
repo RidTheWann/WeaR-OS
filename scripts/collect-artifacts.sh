@@ -58,12 +58,13 @@ echo "    $(basename "$OTA")"
 
 sha256sum "$ARTIFACT_DIR/$(basename "$OTA")" > "$ARTIFACT_DIR/SHA256SUMS"
 
-# Preserve the exact local manifest used by repo sync, including the rendered
-# immutable WeaR revision passed to the workflow.
-if [[ -f "$ANDROID_DIR/.repo/local_manifests/wear-duchamp.xml" ]]; then
-    cp -f "$ANDROID_DIR/.repo/local_manifests/wear-duchamp.xml" "$ARTIFACT_DIR/source-manifest.xml"
+# Preserve the complete resolved repo manifest used for the build, including
+# the inherited AOSP/Lineage projects and all local device overrides.
+if [[ -d "$ANDROID_DIR/.repo" ]] && command -v repo >/dev/null 2>&1; then
+    repo manifest -r > "$ARTIFACT_DIR/source-manifest.xml"
 else
-    cp -f "$ROOT_DIR/manifests/duchamp-lineage-23.1.xml" "$ARTIFACT_DIR/source-manifest.xml"
+    echo "ERROR: repo metadata is unavailable; cannot prove the full source state." >&2
+    exit 1
 fi
 
 cat > "$ARTIFACT_DIR/build-info.txt" <<EOF
