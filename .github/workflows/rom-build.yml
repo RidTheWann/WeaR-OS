@@ -11,6 +11,11 @@ on:
         options:
           - wear_duchamp-userdebug
           - lineage_duchamp-userdebug
+      lineage_ref:
+        description: LineageOS manifest ref (branch for development or immutable SHA for releases)
+        required: true
+        default: lineage-23.1
+        type: string
       wear_ref:
         description: WeaR OS commit SHA (use main for development)
         required: true
@@ -49,7 +54,7 @@ jobs:
     # The label is intentionally custom. Register the self-hosted machine with
     # self-hosted, linux, x64, wearos-build labels.
     runs-on: [self-hosted, linux, x64, wearos-build]
-    timeout-minutes: 2160
+    timeout-minutes: 350
 
     permissions:
       contents: write
@@ -95,7 +100,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          for tool in git repo python3 curl zip unzip rsync ccache sha256sum; do
+          for tool in git repo git-lfs python3 curl zip unzip rsync ccache sha256sum; do
             command -v "$tool" >/dev/null 2>&1 || {
               echo "ERROR: required tool not found: $tool" >&2
               exit 1
@@ -117,6 +122,7 @@ jobs:
         shell: bash
         env:
           ANDROID_DIR: ${{ runner.workspace }}/android-source
+          LINEAGE_REF: ${{ inputs.lineage_ref }}
           WEAR_REF: ${{ inputs.wear_ref }}
           JOBS: ${{ inputs.jobs }}
           FORCE_SYNC: "0"
@@ -180,6 +186,12 @@ jobs:
           }
           ROM="$(find "$ANDROID_DIR/wear-artifacts" -maxdepth 1 -type f -name '*.zip' -print -quit)"
           [[ -n "$ROM" ]] || { echo "No flashable OTA ZIP found" >&2; exit 1; }
+          ROM_BYTES="$(stat -c '%s' "$ROM")"
+          MAX_RELEASE_ASSET_BYTES=$((2 * 1024 * 1024 * 1024 - 1))
+          (( ROM_BYTES <= MAX_RELEASE_ASSET_BYTES )) || {
+            echo "ROM is too large for a GitHub Release asset: $ROM_BYTES bytes" >&2
+            exit 1
+          }
           gh release create "$RELEASE_TAG" "$ROM" "$ANDROID_DIR/wear-artifacts/SHA256SUMS" "$ANDROID_DIR/wear-artifacts/source-manifest.xml" \
             --title "WeaR OS $RELEASE_TAG" \
             --generate-notes \
