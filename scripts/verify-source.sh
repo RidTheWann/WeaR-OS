@@ -18,6 +18,7 @@ fi
 cd "$ANDROID_DIR"
 
 MANIFEST_FILE=".repo/local_manifests/wear-duchamp.xml"
+SOURCE_ENV=".repo/local_manifests/wear-source.env"
 
 [[ -f "$MANIFEST_FILE" ]] || {
     echo "MISSING  $MANIFEST_FILE" >&2
@@ -26,6 +27,15 @@ MANIFEST_FILE=".repo/local_manifests/wear-duchamp.xml"
 }
 
 failures=0
+
+if [[ -f "$SOURCE_ENV" ]]; then
+    # shellcheck disable=SC1090
+    source "$SOURCE_ENV"
+else
+    STACK="${STACK:-}"
+    LINEAGE_REF="${LINEAGE_REF:-}"
+    WEAR_REF="${WEAR_REF:-}"
+fi
 
 verify_repo() {
     local path="$1"
