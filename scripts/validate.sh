@@ -32,16 +32,46 @@ test ! -e vendor/wear/products/AndroidProducts.mk
 test ! -e vendor/wear/products/Android.bp
 grep -q 'wear_duchamp-userdebug' AndroidProducts.mk
 grep -q 'wear_duchamp' vendor/wear/products/wear_duchamp.mk
+grep -q 'PRODUCT_SOONG_NAMESPACES' vendor/wear/products/wear_duchamp.mk
 
-echo "OK  product registration"
+python3 - "vendor/wear/products/wear_duchamp.mk" <<'PY'
+from pathlib import Path
+import sys
+
+text = Path(sys.argv[1]).read_text(encoding="utf-8")
+wear = text.find("WITH_GMS := true")
+device = text.find("device/xiaomi/duchamp/device.mk")
+
+if wear < 0:
+    raise SystemExit("WITH_GMS selector is missing")
+if device < 0:
+    raise SystemExit("duchamp device inclusion is missing")
+if wear > device:
+    raise SystemExit("WITH_GMS must be defined before device.mk is inherited")
+
+if "device/xiaomi/duchamp/lineage_duchamp.mk" in text:
+    raise SystemExit("WeaR must not inherit the upstream lineage_duchamp.mk identity layer")
+
+if "PRODUCT_NAME := wear_duchamp" not in text:
+    raise SystemExit("WeaR product name is missing")
+
+print("OK  product semantics")
+PY
 
 echo "==> Manifest references"
 grep -q 'path="vendor/wear"' manifests/duchamp-lineage-23.1.xml
 grep -q 'path="device/xiaomi/duchamp"' manifests/duchamp-lineage-23.1.xml
 grep -q 'path="vendor/xiaomi/duchamp"' manifests/duchamp-lineage-23.1.xml
 grep -q 'path="device/xiaomi/duchamp-kernel"' manifests/duchamp-lineage-23.1.xml
+grep -q 'path="device/mediatek/sepolicy_vndr"' manifests/duchamp-lineage-23.1.xml
+grep -q 'path="hardware/mediatek"' manifests/duchamp-lineage-23.1.xml
+grep -q 'path="hardware/xiaomi"' manifests/duchamp-lineage-23.1.xml
 
-echo "OK  required project references"
+echo "==> Repository hygiene"
+grep -q 'linguist-vendored=false' .gitattributes
+test ! -d vendor/xiaomi/duchamp
+test ! -d out
+test ! -d .repo
 
 echo
 echo "Validation PASSED."
