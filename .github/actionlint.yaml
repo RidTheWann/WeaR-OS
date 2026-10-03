@@ -1,0 +1,4 @@
+# actionlint configuration for WeaR OS custom runners.
+self-hosted-runner:
+  labels:
+    - wearos-build
