@@ -1,8 +1,8 @@
-name: WeaR OS repository validation
+name: WeaR duchamp device-tree validation
 
 on:
   push:
-    branches: ["main"]
+    branches: [main]
   pull_request:
 
 permissions:
@@ -12,12 +12,57 @@ jobs:
   validate:
     runs-on: ubuntu-latest
     timeout-minutes: 10
+
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
-        with:
-          persist-credentials: false
+        uses: actions/checkout@v4
 
-      - name: Validate repository
+      - name: Validate Python extraction helpers
         shell: bash
-        run: bash scripts/validate.sh
+        run: |
+          set -euo pipefail
+          python3 -m py_compile extract-files.py setup-makefiles.py
+
+      - name: Validate XML
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import xml.etree.ElementTree as ET
+
+          for path in Path(".").rglob("*.xml"):
+              ET.parse(path)
+
+          print("XML validation passed.")
+          PY
+
+      - name: Validate device-tree anchors
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          for f in               Android.bp               AndroidProducts.mk               BoardConfig.mk               device.mk               wear_duchamp.mk               manifest.xml               compatibility_matrix.xml               framework_compatibility_matrix.xml               proprietary-files.txt               proprietary-firmware.txt; do
+            test -f "$f"
+          done
+
+          grep -q 'PRODUCT_NAME := wear_duchamp' wear_duchamp.mk
+          grep -q 'wear_duchamp-userdebug' AndroidProducts.mk
+          grep -q 'TARGET_BOARD_PLATFORM := mt6897' BoardConfig.mk
+          grep -q 'KERNEL_PATH := $(DEVICE_PATH)-kernel' BoardConfig.mk
+          grep -q 'vendor/xiaomi/duchamp/duchamp-vendor.mk' device.mk
+          grep -q '50f301982df14af45af137ba87c565a459a7e65c' README.md
+
+      - name: Check repository hygiene
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if find . -type f               \( -name '*.img' -o -name '*.apk' -o -name '*.so' \)               -not -path './.git/*' | grep -q .; then
+            echo "Unexpected generated/proprietary binary found in device tree." >&2
+            exit 1
+          fi
+
+          test ! -d products
+          test ! -d manifests
+          test ! -d scripts
