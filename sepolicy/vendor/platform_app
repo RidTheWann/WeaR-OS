@@ -1,0 +1,2 @@
+allow platform_app sysfs_therm:dir r_dir_perms;
+allow platform_app sysfs_therm:file r_file_perms;
