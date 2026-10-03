@@ -1,65 +1,54 @@
-# WeaR OS
+# WeaR OS — Xiaomi/POCO duchamp
 
-Custom AOSP/LineageOS ROM project for Xiaomi/POCO duchamp.
+Custom Android ROM device tree for the POCO X6 Pro 5G / Redmi K70E
+(codename: duchamp).
 
-## Device
+This repository follows the conventional LineageOS/AOSP device-tree model and
+is intended to be synced by repo into:
 
-- POCO X6 Pro 5G / Redmi K70E
-- Codename: `duchamp`
-- SoC: MediaTek Dimensity 8300 Ultra / MT6897
+    device/xiaomi/duchamp
 
-## Authoritative reference
+## Hardware baseline
 
-WeaR OS is developed from the LineageOS duchamp device tree supplied for this project:
+Primary reference:
 
     https://github.com/snapboss/device_xiaomi_duchamp.git
 
-Branch: `lineage-23.1`
-Reference commit: `50f301982df14af45af137ba87c565a459a7e65c`
+Pinned reference:
 
-The device tree is treated as the hardware source of truth. WeaR changes are layered on top of it rather than replacing it with another duchamp tree.
+    lineage-23.1
+    50f301982df14af45af137ba87c565a459a7e65c
 
-## Project architecture
+The baseline provides the device board configuration, kernel interface,
+partition/AVB layout, VINTF declarations, rootdir, SELinux policy, overlays,
+power/thermal integration, UDFPS, native shims, XiaomiParts, and extraction
+manifests.
 
-```text
-AOSP / LineageOS
-        |
-        +-- device/xiaomi/duchamp
-        |      +-- Snapboss hardware implementation
-        |      +-- shims / UDFPS / vibrator
-        |      +-- overlays / sepolicy
-        |      +-- power / thermal
-        |      +-- VINTF / init / configs
-        |
-        +-- vendor/xiaomi/duchamp
-        +-- MediaTek / Xiaomi dependencies
-        |
-        +-- vendor/wear
-               +-- WeaR product
-               +-- future WeaR framework
-               +-- future Settings / SystemUI
-               +-- future performance services
-```
+## WeaR product
 
-## Current stage
+WeaR OS is registered directly as:
 
-**Alpha 0.1 — reference bring-up**
+    wear_duchamp-userdebug
 
-The first objective is a reproducible build using the exact locked dependency set. Performance and kernel modifications are intentionally deferred until the reference hardware path is boot-verified.
+The product definition is:
 
-## Build
+    wear_duchamp.mk
 
-From the Android source parent:
+There is no vendor/wear wrapper and no nested AOSP source tree in this
+repository.
 
-    bash /path/to/WeaR-OS/scripts/sync.sh
-    bash /path/to/WeaR-OS/scripts/verify-source.sh
+## Engineering reference
 
-Reference product:
+LineageOS-style duchamp reference:
 
-    BUILD_PRODUCT=lineage_duchamp-userdebug bash /path/to/WeaR-OS/scripts/build.sh
+    https://github.com/Saikrishna1504/device_xiaomi_duchamp.git
 
-WeaR product:
+That repository is consulted for device-side implementation patterns. WeaR OS
+does not blindly mix ROM-specific branches, vendor baselines or unrelated
+device-tree revisions.
 
-    BUILD_PRODUCT=wear_duchamp-userdebug bash /path/to/WeaR-OS/scripts/build.sh
+## Repository policy
 
-See `docs/dependency-audit.md`, `docs/bringup.md`, and `docs/github-actions.md`.
+Keep proprietary blobs, firmware payloads, signing keys, generated images and
+build output outside this repository. Extraction manifests are source
+descriptions, not payload storage.
