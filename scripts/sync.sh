@@ -20,11 +20,11 @@ STACK="${STACK:-23.2-current}"
 case "$STACK" in
     23.2-current)
         MANIFEST_TEMPLATE="$ROOT_DIR/manifests/duchamp-lineage-23.2.xml"
-        DEFAULT_LINEAGE_REF="lineage-23.2"
+        DEFAULT_LINEAGE_REF="eabe68377217a88c81fa933db0136ea4146ff369"
         ;;
     23.1-snapboss)
         MANIFEST_TEMPLATE="$ROOT_DIR/manifests/duchamp-lineage-23.1.xml"
-        DEFAULT_LINEAGE_REF="lineage-23.1"
+        DEFAULT_LINEAGE_REF="7d408383a8f199ba9a72e8a3b4314c6d848b459c"
         ;;
     *)
         echo "ERROR: unsupported STACK='$STACK'." >&2
