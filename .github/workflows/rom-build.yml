@@ -3,6 +3,14 @@ name: WeaR OS ROM Build
 on:
   workflow_dispatch:
     inputs:
+      stack:
+        description: Source stack
+        required: true
+        type: choice
+        default: 23.2-current
+        options:
+          - 23.2-current
+          - 23.1-snapboss
       build_product:
         description: Product to build
         required: true
@@ -12,9 +20,9 @@ on:
           - wear_duchamp-userdebug
           - lineage_duchamp-userdebug
       lineage_ref:
-        description: LineageOS manifest ref (branch for development or immutable SHA for releases)
-        required: true
-        default: lineage-23.1
+        description: Optional LineageOS manifest ref; defaults to the selected stack branch
+        required: false
+        default: ""
         type: string
       wear_ref:
         description: WeaR OS commit SHA (use main for development)
@@ -73,6 +81,9 @@ jobs:
             echo "jobs must be an integer from 1 to 64" >&2
             exit 1
           }
+          if [[ "${{ inputs.stack }}" == "23.1-snapboss" && "${{ inputs.build_product }}" == "wear_duchamp-userdebug" ]]; then
+            echo "WARNING: 23.1 Snapboss is the legacy compatibility profile; release publishing should use 23.2-current." >&2
+          fi
           if [[ "${{ inputs.publish_release }}" == "true" ]]; then
             [[ "${{ inputs.build_product }}" == "wear_duchamp-userdebug" ]] || {
               echo "Only wear_duchamp-userdebug builds may be published as WeaR releases." >&2
@@ -122,6 +133,7 @@ jobs:
         shell: bash
         env:
           ANDROID_DIR: ${{ runner.workspace }}/android-source
+          STACK: ${{ inputs.stack }}
           LINEAGE_REF: ${{ inputs.lineage_ref }}
           WEAR_REF: ${{ inputs.wear_ref }}
           JOBS: ${{ inputs.jobs }}
@@ -132,6 +144,7 @@ jobs:
         shell: bash
         env:
           ANDROID_DIR: ${{ runner.workspace }}/android-source
+          STACK: ${{ inputs.stack }}
           LINEAGE_REF: ${{ inputs.lineage_ref }}
           WEAR_REF: ${{ inputs.wear_ref }}
         run: bash scripts/verify-source.sh
@@ -156,6 +169,7 @@ jobs:
         env:
           ANDROID_DIR: ${{ runner.workspace }}/android-source
           BUILD_PRODUCT: ${{ inputs.build_product }}
+          STACK: ${{ inputs.stack }}
           LINEAGE_REF: ${{ inputs.lineage_ref }}
           WEAR_REF: ${{ inputs.wear_ref }}
         run: bash scripts/collect-artifacts.sh
