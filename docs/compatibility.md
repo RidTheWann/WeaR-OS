@@ -4,7 +4,7 @@ Audit date: 2026-10-03
 
 ## Primary bring-up stack
 
-The primary stack is **23.2-current**. It uses the current public duchamp device tree together with the matching 23.2-era kernel/vendor integration.
+The primary stack is **23.1-snapboss**, because the project's device-source baseline is the Snapboss LineageOS tree supplied for this project. It uses the current public duchamp device tree together with the matching 23.2-era kernel/vendor integration.
 
 | Layer | Project | Selected revision | Status |
 | --- | --- | --- | --- |
@@ -20,9 +20,9 @@ The primary stack is **23.2-current**. It uses the current public duchamp device
 
 The current duchamp device tree was updated against HyperOS OS3.0.9.0.WNLMIXM in September 2026 and contains fixes/features newer than the supplied Snapboss snapshot, including updated blobs/firmware references, touch AIDL integration, sensor fixes, and power-off alarm configuration.
 
-## Legacy compatibility stack
+## Experimental compatibility stack
 
-The original user-supplied tree remains available as **23.1-snapboss**:
+A separately maintained **23.2-experimental** profile is retained for compatibility research:
 
 | Layer | Project | Selected revision |
 | --- | --- | --- |
@@ -31,7 +31,7 @@ The original user-supplied tree remains available as **23.1-snapboss**:
 | Kernel outputs | mt6897-devs/device_xiaomi_duchamp-kernel | a2fd5cb97fd76a4eb61fcfe11af03ae74bd57416 |
 | Vendor | mt6897-devs/vendor_xiaomi_duchamp | 38c572c3914d90970dce609fef9186cd6decf1db |
 
-This profile is retained for regression comparison, not used as the primary WeaR release path.
+This profile is experimental and must not replace the Snapboss source-of-truth until its complete dependency set is verified and boot-tested.
 
 ## Why the split exists
 
