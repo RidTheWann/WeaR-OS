@@ -50,8 +50,17 @@ verify_repo() {
     echo "OK       $path @ $actual"
 }
 
-WEAR_REF="${WEAR_REF:-}"
+LINEAGE_REF="${LINEAGE_REF:-}"
+if [[ -n "$LINEAGE_REF" && "$LINEAGE_REF" =~ ^[0-9a-fA-F]{40}$ ]]; then
+    if [[ ! -d ".repo/manifests" ]]; then
+        echo "MISSING  .repo/manifests"
+        failures=$((failures + 1))
+    else
+        verify_repo ".repo/manifests" "$LINEAGE_REF"
+    fi
+fi
 
+WEAR_REF="${WEAR_REF:-}"
 if [[ -n "$WEAR_REF" ]]; then
     verify_repo "vendor/wear" "$WEAR_REF"
 fi
@@ -63,7 +72,7 @@ verify_repo "device/mediatek/sepolicy_vndr" "1b12039600b2ad9b1a435682bc8f61fd1f0
 verify_repo "hardware/mediatek" "68f9be72a32bca66e7c63d69e9739b18f13c8b48"
 verify_repo "hardware/xiaomi" "37fe5e4a6acbce4ca3d91e059fd7bd60a0890540"
 verify_repo "hardware/dolby" "6300a4e30757d5810d62b2df0cff973ec438a70f"
-verify_repo "packages/apps/Aperture" "a4c34aa57ed56de60f29349a1e6d20cf8160ca15"
+verify_repo "packages/apps/Aperture" "a4c34aa57ed56de60f29349a1e6d20cf816ca15"
 
 if (( failures != 0 )); then
     echo
