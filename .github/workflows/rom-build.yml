@@ -12,12 +12,12 @@ on:
           - wear_duchamp-userdebug
           - lineage_duchamp-userdebug
       lineage_ref:
-        description: Immutable LineageOS manifest revision
+        description: Immutable LineageOS manifest revision (full commit SHA)
         required: true
         default: 7d408383a8f199ba9a72e8a3b4314c6d848b459c
         type: string
       wear_ref:
-        description: Immutable WeaR OS commit, or main for development
+        description: WeaR OS commit SHA, or main for development builds
         required: true
         default: main
         type: string
@@ -65,12 +65,17 @@ jobs:
           PUBLISH_RELEASE: ${{ inputs.publish_release }}
           RELEASE_TAG: ${{ inputs.release_tag }}
           BUILD_PRODUCT: ${{ inputs.build_product }}
+          LINEAGE_REF: ${{ inputs.lineage_ref }}
+          WEAR_REF: ${{ inputs.wear_ref }}
         run: |
           set -euo pipefail
           [[ "$JOBS_INPUT" =~ ^[1-9][0-9]?$ ]] || { echo "jobs must be 1-64" >&2; exit 1; }
           (( 10#$JOBS_INPUT <= 64 )) || { echo "jobs must be 1-64" >&2; exit 1; }
+          [[ "$LINEAGE_REF" =~ ^[0-9a-fA-F]{40}$ ]] || { echo "lineage_ref must be a full 40-character commit SHA." >&2; exit 1; }
+          [[ "$WEAR_REF" == "main" || "$WEAR_REF" =~ ^[0-9a-fA-F]{40}$ ]] || { echo "wear_ref must be main or a full 40-character commit SHA." >&2; exit 1; }
           if [[ "$PUBLISH_RELEASE" == "true" ]]; then
             [[ "$BUILD_PRODUCT" == "wear_duchamp-userdebug" ]] || { echo "Only wear_duchamp-userdebug may be released." >&2; exit 1; }
+            [[ "$WEAR_REF" =~ ^[0-9a-fA-F]{40}$ ]] || { echo "Release builds require an immutable WeaR OS commit SHA, not main." >&2; exit 1; }
             [[ "$RELEASE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z.-]+)?$ ]] || { echo "Invalid release tag." >&2; exit 1; }
           fi
 
