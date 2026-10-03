@@ -4,9 +4,9 @@ Audit date: 2026-10-03
 
 ## Executive status
 
-The repository has moved from a placeholder into a structured ROM project layer. Product registration, source manifests, validation tooling, documentation, licensing, and CI are present.
+The repository has moved from a placeholder into a structured ROM project layer. Product registration, source manifests, validation tooling, documentation, licensing, CI, and explicit device-tree provenance are present.
 
-The project is **not yet a boot-verified ROM**. The main engineering risk is dependency compatibility between the supplied Snapboss LineageOS 23.1 device tree and the newer public duchamp kernel/vendor revisions.
+The project is **not yet a boot-verified ROM**. The primary device-tree source is the user-supplied Snapboss LineageOS 23.1 tree. The main engineering task is to validate the exact vendor/kernel/platform dependency set against that tree.
 
 ## Findings and remediation
 
