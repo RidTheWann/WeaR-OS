@@ -77,33 +77,90 @@ jobs:
         run: |
           set -euo pipefail
 
-          grep -q 'missi-user 15 AP3A.240905.015.A2 OS2.0.206.0.VNLMIXM release-keys' lineage_duchamp.mk
-          grep -q 'duchamp:15/AP3A.240905.015.A2/OS2.0.206.0.VNLMIXM:user/release-keys' lineage_duchamp.mk
-          ! grep -q 'LUMINE_MAINTAINER := Luxured' lineage_duchamp.mk
-          ! grep -q 'TARGET_ENABLE_BLUR := true' lineage_duchamp.mk
-
-          grep -q "libmtkcam_hwnode.jpegnode.so': blob_fixup" extract-files.py
-          grep -q "add_needed('libultrahdr_shim.so')" extract-files.py
-          grep -q "replace_needed('libultrahdr.so', 'libultrahdr-v34.so')" extract-files.py
-
-          ! grep -Fq '/devices/system/cpu/cpu[0-7]/online' sepolicy/vendor/genfs_contexts
-          for cpu in 0 1 2 3 4 5 6 7; do
-            grep -q "/devices/system/cpu/cpu${cpu}/online" sepolicy/vendor/genfs_contexts
-          done
-
           python3 - <<'PY'
           from pathlib import Path
           import ast
           import re
 
+          lineage = Path("lineage_duchamp.mk").read_text(encoding="utf-8")
+          proprietary = Path("proprietary-files.txt").read_text(encoding="utf-8")
+          wear = Path("wear_duchamp.mk").read_text(encoding="utf-8")
+
+          desc = re.search(
+              r'BuildDesc="(?P<product>[^"\\s]+)-user\\s+'
+              r'(?P<release>[0-9]+)\\s+(?P<build_id>[^\\s]+)\\s+'
+              r'(?P<incremental>[^\\s]+)\\s+release-keys"',
+              lineage,
+          )
+          fingerprint = re.search(
+              r'BuildFingerprint=[^/\\s]+/(?P<product>[^/\\s]+)/[^:]+:'
+              r'(?P<release>[0-9]+)/(?P<build_id>[^/]+)/'
+              r'(?P<incremental>[^:]+):user/release-keys',
+              lineage,
+          )
+          header = re.search(
+              r'^# Unpinned blobs from (?P<product>[^\\s]+)-user\\s+'
+              r'(?P<release>[0-9]+)\\s+(?P<build_id>[^\\s]+)\\s+'
+              r'(?P<incremental>[^\\s]+)\\s+release-keys',
+              proprietary,
+              re.MULTILINE,
+          )
+
+          if not desc:
+              raise SystemExit("BuildDesc stock identity not found")
+          if not fingerprint:
+              raise SystemExit("BuildFingerprint stock identity not found")
+          if not header:
+              raise SystemExit("proprietary-files.txt stock identity header not found")
+
+          desc_tuple = tuple(desc.group(k) for k in ("release", "build_id", "incremental"))
+          fp_tuple = tuple(fingerprint.group(k) for k in ("release", "build_id", "incremental"))
+          header_tuple = tuple(header.group(k) for k in ("release", "build_id", "incremental"))
+          if desc_tuple != fp_tuple or desc_tuple != header_tuple:
+              raise SystemExit(
+                  "stock identity mismatch: "
+                  f"BuildDesc={desc_tuple}, BuildFingerprint={fp_tuple}, "
+                  f"proprietary-files.txt={header_tuple}"
+              )
+
+          if desc.group("product") != fingerprint.group("product"):
+              raise SystemExit(
+                  "product mismatch: "
+                  f"BuildDesc={desc.group('product')}, "
+                  f"BuildFingerprint={fingerprint.group('product')}"
+              )
+
+          if "LUMINE_MAINTAINER :=" in lineage or "TARGET_ENABLE_BLUR := true" in lineage:
+              raise SystemExit("stale LumineDroid configuration remains in lineage_duchamp.mk")
+          if "LUMINE_MAINTAINER" in wear:
+              raise SystemExit("stale LumineDroid maintainer variable remains in wear_duchamp.mk")
+          for stale in ("WEAR_OS_NAME :=", "WEAR_OS_DEVICE :="):
+              if stale in wear:
+                  raise SystemExit(f"unused product variable remains in wear_duchamp.mk: {stale}")
+
+          extract = Path("extract-files.py").read_text(encoding="utf-8")
+          if "libmtkcam_hwnode.jpegnode.so': blob_fixup" not in extract:
+              raise SystemExit("jpegnode blob fixup missing")
+          if "add_needed('libultrahdr_shim.so')" not in extract:
+              raise SystemExit("jpegnode UltraHDR shim fixup missing")
+          if "replace_needed('libultrahdr.so', 'libultrahdr-v34.so')" not in extract:
+              raise SystemExit("jpegnode UltraHDR SONAME fixup missing")
+
+          genfs = Path("sepolicy/vendor/genfs_contexts").read_text(encoding="utf-8")
+          if "/devices/system/cpu/cpu[0-7]/online" in genfs:
+              raise SystemExit("invalid cpu[0-7] genfscon pattern remains")
+          for cpu in range(8):
+              if f"/devices/system/cpu/cpu{cpu}/online" not in genfs:
+                  raise SystemExit(f"missing cpu{cpu}/online genfscon label")
+
           receiver = Path("parts/src/org/lineageos/settings/BootCompletedReceiver.java").read_text(encoding="utf-8")
           starts = re.findall(
-              r'startServiceAsUser\(touchSamplingServiceIntent,\s*UserHandle\.CURRENT\)',
+              r'startServiceAsUser\\(touchSamplingServiceIntent,\\s*UserHandle\\.CURRENT\\)',
               receiver,
           )
           if len(starts) != 1:
               raise SystemExit(f"expected exactly one TouchSamplingService launch, found {len(starts)}")
-          if 'new Intent(context, TouchSamplingService.class)' not in receiver:
+          if "new Intent(context, TouchSamplingService.class)" not in receiver:
               raise SystemExit("TouchSamplingService Intent construction missing")
 
           manifest = Path("parts/AndroidManifest.xml").read_text(encoding="utf-8")
@@ -112,7 +169,7 @@ jobs:
                   raise SystemExit(f"undefined service permission remains: {permission}")
 
           telephony = Path("overlay/TelephonyResOverlayDuchamp/AndroidManifest.xml").read_text(encoding="utf-8")
-          if 'package="com.android.phone.overlay.pissarro"' in telephony:
+          if "pissarro" in telephony:
               raise SystemExit("wrong pissarro telephony package remains")
           if 'package="com.android.phone.overlay.duchamp"' not in telephony:
               raise SystemExit("duchamp telephony package missing")
@@ -121,7 +178,7 @@ jobs:
           if 'android:priority="101"' not in redmi:
               raise SystemExit("CN SettingsProvider overlay priority is not deterministic")
 
-          tree = ast.parse(Path("extract-files.py").read_text(encoding="utf-8"))
+          tree = ast.parse(extract)
           blob_dict = next(
               (
                   node.value
@@ -156,7 +213,10 @@ jobs:
                       raise SystemExit(f"duplicate blob_fixups key: {value!r}")
                   seen.add(value)
 
-          print("Duchamp integration invariants passed.")
+          print(
+              "Duchamp integration invariants passed: "
+              f"identity={desc_tuple}, product={desc.group('product')}"
+          )
           PY
 
       - name: Check repository hygiene
