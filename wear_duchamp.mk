@@ -7,7 +7,6 @@
 
 $(call inherit-product, device/xiaomi/duchamp/lineage_duchamp.mk)
 
-LUMINE_MAINTAINER :=
 
 PRODUCT_NAME := wear_duchamp
 PRODUCT_DEVICE := duchamp
@@ -16,10 +15,8 @@ PRODUCT_BRAND := POCO
 PRODUCT_MODEL := 2311DRK48G
 PRODUCT_SYSTEM_NAME := duchamp_global
 
-WEAR_OS_NAME := WeaR OS
 WEAR_OS_VERSION := 0.1.0-alpha1
 WEAR_OS_BUILD_TYPE := UNOFFICIAL
-WEAR_OS_DEVICE := duchamp
 
 PRODUCT_SYSTEM_PROPERTIES += \
     ro.wearos.name=WeaR_OS \
