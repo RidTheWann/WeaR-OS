@@ -120,11 +120,14 @@ jobs:
 
           manifest = """<?xml version="1.0" encoding="UTF-8"?>
           <manifest>
-              <remote name="github" fetch="https://github.com/"/>
+              <remote name="external_github" fetch="https://github.com/"/>
 
+              <remove-project name="LineageOS/android_hardware_lineage_interfaces"/>
+              <remove-project name="LineageOS/android_packages_apps_Aperture"/>
+              <remove-project name="LineageOS/android_vendor_qcom_opensource_vibrator"/>
               <project name="RidTheWann/WeaR-OS"
                        path="device/xiaomi/duchamp"
-                       remote="github"
+                       remote="external_github"
                        revision="%s"/>
 
               <project name="snapboss/hardware_xiaomi"
@@ -170,6 +173,9 @@ jobs:
               manifest, encoding="utf-8"
           )
           PY
+          cd "$ANDROID_DIR"
+          repo manifest -r > /dev/null
+
 
       - name: Sync source
         shell: bash
