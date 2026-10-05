@@ -127,9 +127,7 @@
 
         <service
             android:name=".refreshrate.RefreshService"
-            android:exported="true"
-            android:permission="RefreshService">
-        </service>
+            android:exported="false" />
 
         <!-- Display Saturation activity -->
         <activity
@@ -164,14 +162,12 @@
         <!-- Displayfeature color service -->
         <service
             android:name=".display.ColorModeService"
-            android:permission="ColorModeService">
-        </service>
+            android:exported="false" />
 
         <!-- Pocketservice service -->
         <service
             android:name=".doze.PocketService"
-            android:permission="PocketService">
-        </service>
+            android:exported="false" />
 
         <!-- Hightouch Sampling Service -->
         <service
@@ -248,8 +244,7 @@
 
         <service
             android:name=".turbocharging.TurboChargingService"
-            android:permission="TurboChargingService">
-        </service>
+            android:exported="false" />
 
     </application>
 </manifest>
