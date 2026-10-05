@@ -14,9 +14,6 @@ $(call inherit-product, device/xiaomi/duchamp/device.mk)
 # Inherit some common Lineage stuff.
 $(call inherit-product, vendor/lineage/config/common_full_phone.mk)
 
-# LumineDroid 
-LUMINE_MAINTAINER := Luxured
-TARGET_ENABLE_BLUR := true
 WITH_GMS := true
 
 PRODUCT_NAME := lineage_duchamp
