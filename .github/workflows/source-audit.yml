@@ -38,6 +38,12 @@ jobs:
             ".gitattributes"
             ".gitignore"
             "overlay/FrameworksResOverlayDuchamp/res/values/config.xml"
+            "extract-files.py"
+            "sepolicy/vendor/genfs_contexts"
+            "parts/src/org/lineageos/settings/BootCompletedReceiver.java"
+            "parts/AndroidManifest.xml"
+            "overlay/SettingsProviderOverlayDuchampRedmi/AndroidManifest.xml"
+            "overlay/TelephonyResOverlayDuchamp/AndroidManifest.xml"
           )
 
           is_allowed() {
