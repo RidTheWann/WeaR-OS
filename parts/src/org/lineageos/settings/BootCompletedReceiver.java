@@ -94,9 +94,6 @@ public class BootCompletedReceiver extends BroadcastReceiver {
         Intent touchSamplingServiceIntent = new Intent(context, TouchSamplingService.class);
         context.startServiceAsUser(touchSamplingServiceIntent, UserHandle.CURRENT);
 
-        // Start Touch Sampling Service
-        context.startServiceAsUser(new Intent(context, TouchSamplingService.class), UserHandle.CURRENT);
-
         // Start TurboChargingService
         Intent turboChargingIntent = new Intent(context, TurboChargingService.class);
         context.startService(turboChargingIntent);
