@@ -72,6 +72,77 @@ jobs:
           ! grep -R -n -F "$forbidden" .github/workflows
           expected_lunch=$(printf '%s' 'lunch "wear_duchamp-${BUILD_TYPE}"')
           grep -q -F "$expected_lunch" .github/workflows/rom-build.yml
+      - name: Validate duchamp integration invariants
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          grep -q 'BuildDesc="missi-user 15 AP3A.240905.015.A2 OS2.0.206.0.VNLMIXM release-keys"' lineage_duchamp.mk
+          grep -q 'BuildFingerprint=POCO/duchamp_global/duchamp:15/AP3A.240905.015.A2/OS2.0.206.0.VNLMIXM:user/release-keys' lineage_duchamp.mk
+          ! grep -q 'LUMINE_MAINTAINER := Luxured' lineage_duchamp.mk
+          ! grep -q 'TARGET_ENABLE_BLUR := true' lineage_duchamp.mk
+
+          python3 - <<'PY'
+          import ast
+          from pathlib import Path
+
+          tree = ast.parse(Path("extract-files.py").read_text(encoding="utf-8"))
+          blob_dict = next(
+              (
+                  node.value
+                  for node in tree.body
+                  if isinstance(node, ast.AnnAssign)
+                  and isinstance(node.target, ast.Name)
+                  and node.target.id == "blob_fixups"
+              ),
+              None,
+          )
+          if not isinstance(blob_dict, ast.Dict):
+              raise SystemExit("blob_fixups dictionary not found")
+
+          def literal(node):
+              if isinstance(node, ast.Constant) and isinstance(node.value, str):
+                  return ("str", node.value)
+              if isinstance(node, ast.Tuple):
+                  values = []
+                  for item in node.elts:
+                      value = literal(item)
+                      if value is None:
+                          return None
+                      values.append(value)
+                  return ("tuple", tuple(values))
+              return None
+
+          seen = set()
+          for key in blob_dict.keys:
+              value = literal(key)
+              if value is not None and value in seen:
+                  raise SystemExit(f"Duplicate blob_fixups key: {value!r}")
+              if value is not None:
+                  seen.add(value)
+
+          print("blob_fixups contains no duplicate literal keys.")
+          PY
+
+          test "$(grep -c "libmtkcam_hwnode.jpegnode.so': blob_fixup" extract-files.py)" -eq 1
+          grep -A2 "libmtkcam_hwnode.jpegnode.so': blob_fixup" extract-files.py | grep -q "add_needed('libultrahdr_shim.so')"
+          grep -A2 "libmtkcam_hwnode.jpegnode.so': blob_fixup" extract-files.py | grep -q "replace_needed('libultrahdr.so', 'libultrahdr-v34.so')"
+
+          ! grep -Fq '/devices/system/cpu/cpu[0-7]/online' sepolicy/vendor/genfs_contexts
+          for cpu in 0 1 2 3 4 5 6 7; do
+            grep -q "/devices/system/cpu/cpu${cpu}/online" sepolicy/vendor/genfs_contexts
+          done
+
+          test "$(grep -c 'startServiceAsUser.*TouchSamplingService.class' parts/src/org/lineageos/settings/BootCompletedReceiver.java)" -eq 1
+
+          ! grep -q 'android:permission="RefreshService"' parts/AndroidManifest.xml
+          ! grep -q 'android:permission="ColorModeService"' parts/AndroidManifest.xml
+          ! grep -q 'android:permission="PocketService"' parts/AndroidManifest.xml
+          ! grep -q 'android:permission="TurboChargingService"' parts/AndroidManifest.xml
+
+          grep -q 'android:priority="101"' overlay/SettingsProviderOverlayDuchampRedmi/AndroidManifest.xml
+          grep -q 'package="com.android.phone.overlay.duchamp"' overlay/TelephonyResOverlayDuchamp/AndroidManifest.xml
+
       - name: Check repository hygiene
         shell: bash
         run: |
