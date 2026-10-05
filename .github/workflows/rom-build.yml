@@ -174,8 +174,7 @@ jobs:
           )
           PY
           cd "$ANDROID_DIR"
-          repo manifest -r > /dev/null
-
+          repo manifest > /dev/null
 
       - name: Sync source
         shell: bash
