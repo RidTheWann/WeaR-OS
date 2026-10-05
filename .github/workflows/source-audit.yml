@@ -29,6 +29,7 @@ jobs:
 
           allowed_differences=(
             "AndroidProducts.mk"
+            "lineage_duchamp.mk"
             "README.md"
             "wear_duchamp.mk"
             "CONTRIBUTING.md"
