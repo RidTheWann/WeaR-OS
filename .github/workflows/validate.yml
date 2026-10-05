@@ -77,6 +77,10 @@ jobs:
           grep -q -F 'm selinux_policy' .github/workflows/rom-build.yml
           grep -q -F 'm check-vintf-all' .github/workflows/rom-build.yml
           grep -q -F 'mka bacon' .github/workflows/rom-build.yml
+          grep -q -F '<remote name="external_github" fetch="https://github.com/"/>' .github/workflows/rom-build.yml
+          grep -q -F '<remove-project name="LineageOS/android_hardware_lineage_interfaces"/>' .github/workflows/rom-build.yml
+          grep -q -F '<remove-project name="LineageOS/android_packages_apps_Aperture"/>' .github/workflows/rom-build.yml
+          grep -q -F '<remove-project name="LineageOS/android_vendor_qcom_opensource_vibrator"/>' .github/workflows/rom-build.yml
           grep -q -F 'echo "CCACHE_DIR=$CCACHE_DIR" >> "$GITHUB_ENV"' .github/workflows/rom-build.yml
           grep -q -F 'echo "USE_CCACHE=$USE_CCACHE" >> "$GITHUB_ENV"' .github/workflows/rom-build.yml
           grep -q -F 'echo "CCACHE_EXEC=$CCACHE_EXEC" >> "$GITHUB_ENV"' .github/workflows/rom-build.yml
