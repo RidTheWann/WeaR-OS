@@ -87,21 +87,21 @@ jobs:
           wear = Path("wear_duchamp.mk").read_text(encoding="utf-8")
 
           desc = re.search(
-              r'BuildDesc="(?P<product>[^"\\s]+)-user\\s+'
-              r'(?P<release>[0-9]+)\\s+(?P<build_id>[^\\s]+)\\s+'
-              r'(?P<incremental>[^\\s]+)\\s+release-keys"',
+              r'BuildDesc="(?P<product>[^"\s]+)-user\s+'
+              r'(?P<release>[0-9]+)\s+(?P<build_id>[^\s]+)\s+'
+              r'(?P<incremental>[^\s]+)\s+release-keys"',
               lineage,
           )
           fingerprint = re.search(
-              r'BuildFingerprint=[^/\\s]+/(?P<product>[^/\\s]+)/[^:]+:'
+              r'BuildFingerprint=[^/\s]+/(?P<product>[^/\s]+)/[^:]+:'
               r'(?P<release>[0-9]+)/(?P<build_id>[^/]+)/'
               r'(?P<incremental>[^:]+):user/release-keys',
               lineage,
           )
           header = re.search(
-              r'^# Unpinned blobs from (?P<product>[^\\s]+)-user\\s+'
-              r'(?P<release>[0-9]+)\\s+(?P<build_id>[^\\s]+)\\s+'
-              r'(?P<incremental>[^\\s]+)\\s+release-keys',
+              r'^# Unpinned blobs from (?P<product>[^\s]+)-user\s+'
+              r'(?P<release>[0-9]+)\s+(?P<build_id>[^\s]+)\s+'
+              r'(?P<incremental>[^\s]+)\s+release-keys',
               proprietary,
               re.MULTILINE,
           )
@@ -155,7 +155,7 @@ jobs:
 
           receiver = Path("parts/src/org/lineageos/settings/BootCompletedReceiver.java").read_text(encoding="utf-8")
           starts = re.findall(
-              r'startServiceAsUser\\(touchSamplingServiceIntent,\\s*UserHandle\\.CURRENT\\)',
+              r'startServiceAsUser\(touchSamplingServiceIntent,\s*UserHandle\.CURRENT\)',
               receiver,
           )
           if len(starts) != 1:
