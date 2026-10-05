@@ -72,6 +72,11 @@ jobs:
           ! grep -R -n -F "$forbidden" .github/workflows
           expected_lunch=$(printf '%s' 'lunch "wear_duchamp-${BUILD_TYPE}"')
           grep -q -F "$expected_lunch" .github/workflows/rom-build.yml
+          grep -q -F 'get_build_var BOARD_SYSTEMIMAGE_FILE_SYSTEM_TYPE' .github/workflows/rom-build.yml
+          grep -q -F 'm nothing' .github/workflows/rom-build.yml
+          grep -q -F 'm selinux_policy' .github/workflows/rom-build.yml
+          grep -q -F 'm check-vintf-all' .github/workflows/rom-build.yml
+          grep -q -F 'mka bacon' .github/workflows/rom-build.yml
       - name: Validate duchamp integration invariants
         shell: bash
         run: |
