@@ -201,7 +201,12 @@ jobs:
         run: |
           set -euo pipefail
           export CCACHE_DIR="$HOME/.cache/ccache-wear"
+          export USE_CCACHE=1
+          export CCACHE_EXEC="$(command -v ccache)"
           mkdir -p "$CCACHE_DIR"
+          echo "CCACHE_DIR=$CCACHE_DIR" >> "$GITHUB_ENV"
+          echo "USE_CCACHE=$USE_CCACHE" >> "$GITHUB_ENV"
+          echo "CCACHE_EXEC=$CCACHE_EXEC" >> "$GITHUB_ENV"
           ccache -M 40G
           ccache -o compression=true
 
