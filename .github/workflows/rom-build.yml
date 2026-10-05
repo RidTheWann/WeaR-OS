@@ -210,16 +210,52 @@ jobs:
         shell: bash
         run: rm -rf "$ANDROID_DIR/out"
 
-      - name: Build wear_duchamp
+      - name: Configure wear_duchamp
         shell: bash
         env:
-          JOBS: ${{ inputs.jobs }}
           BUILD_TYPE: ${{ inputs.build_type }}
         run: |
           set -euo pipefail
           cd "$ANDROID_DIR"
           source build/envsetup.sh
           lunch "wear_duchamp-${BUILD_TYPE}"
+          echo "BOARD_SYSTEMIMAGE_FILE_SYSTEM_TYPE=$(get_build_var BOARD_SYSTEMIMAGE_FILE_SYSTEM_TYPE)"
+          get_build_var BOARD_SYSTEMIMAGE_FILE_SYSTEM_TYPE
+
+      - name: Soong analysis
+        shell: bash
+        env:
+          JOBS: ${{ inputs.jobs }}
+        run: |
+          set -euo pipefail
+          cd "$ANDROID_DIR"
+          m nothing -j"$JOBS"
+
+      - name: SELinux policy
+        shell: bash
+        env:
+          JOBS: ${{ inputs.jobs }}
+        run: |
+          set -euo pipefail
+          cd "$ANDROID_DIR"
+          m selinux_policy -j"$JOBS"
+
+      - name: VINTF validation
+        shell: bash
+        env:
+          JOBS: ${{ inputs.jobs }}
+        run: |
+          set -euo pipefail
+          cd "$ANDROID_DIR"
+          m check-vintf-all -j"$JOBS"
+
+      - name: Build OTA
+        shell: bash
+        env:
+          JOBS: ${{ inputs.jobs }}
+        run: |
+          set -euo pipefail
+          cd "$ANDROID_DIR"
           mka bacon -j"$JOBS"
 
       - name: Collect artifacts
