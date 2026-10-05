@@ -77,6 +77,9 @@ jobs:
           grep -q -F 'm selinux_policy' .github/workflows/rom-build.yml
           grep -q -F 'm check-vintf-all' .github/workflows/rom-build.yml
           grep -q -F 'mka bacon' .github/workflows/rom-build.yml
+          grep -q -F 'echo "CCACHE_DIR=$CCACHE_DIR" >> "$GITHUB_ENV"' .github/workflows/rom-build.yml
+          grep -q -F 'echo "USE_CCACHE=$USE_CCACHE" >> "$GITHUB_ENV"' .github/workflows/rom-build.yml
+          grep -q -F 'echo "CCACHE_EXEC=$CCACHE_EXEC" >> "$GITHUB_ENV"' .github/workflows/rom-build.yml
 
           python3 - <<'PY'
           from pathlib import Path
