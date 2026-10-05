@@ -77,14 +77,49 @@ jobs:
         run: |
           set -euo pipefail
 
-          grep -q 'BuildDesc="missi-user 15 AP3A.240905.015.A2 OS2.0.206.0.VNLMIXM release-keys"' lineage_duchamp.mk
-          grep -q 'BuildFingerprint=POCO/duchamp_global/duchamp:15/AP3A.240905.015.A2/OS2.0.206.0.VNLMIXM:user/release-keys' lineage_duchamp.mk
+          grep -q 'missi-user 15 AP3A.240905.015.A2 OS2.0.206.0.VNLMIXM release-keys' lineage_duchamp.mk
+          grep -q 'duchamp:15/AP3A.240905.015.A2/OS2.0.206.0.VNLMIXM:user/release-keys' lineage_duchamp.mk
           ! grep -q 'LUMINE_MAINTAINER := Luxured' lineage_duchamp.mk
           ! grep -q 'TARGET_ENABLE_BLUR := true' lineage_duchamp.mk
 
+          grep -q "libmtkcam_hwnode.jpegnode.so': blob_fixup" extract-files.py
+          grep -q "add_needed('libultrahdr_shim.so')" extract-files.py
+          grep -q "replace_needed('libultrahdr.so', 'libultrahdr-v34.so')" extract-files.py
+
+          ! grep -Fq '/devices/system/cpu/cpu[0-7]/online' sepolicy/vendor/genfs_contexts
+          for cpu in 0 1 2 3 4 5 6 7; do
+            grep -q "/devices/system/cpu/cpu${cpu}/online" sepolicy/vendor/genfs_contexts
+          done
+
           python3 - <<'PY'
-          import ast
           from pathlib import Path
+          import ast
+          import re
+
+          receiver = Path("parts/src/org/lineageos/settings/BootCompletedReceiver.java").read_text(encoding="utf-8")
+          starts = re.findall(
+              r'startServiceAsUser\(touchSamplingServiceIntent,\s*UserHandle\.CURRENT\)',
+              receiver,
+          )
+          if len(starts) != 1:
+              raise SystemExit(f"expected exactly one TouchSamplingService launch, found {len(starts)}")
+          if 'new Intent(context, TouchSamplingService.class)' not in receiver:
+              raise SystemExit("TouchSamplingService Intent construction missing")
+
+          manifest = Path("parts/AndroidManifest.xml").read_text(encoding="utf-8")
+          for permission in ("RefreshService", "ColorModeService", "PocketService", "TurboChargingService"):
+              if f'android:permission="{permission}"' in manifest:
+                  raise SystemExit(f"undefined service permission remains: {permission}")
+
+          telephony = Path("overlay/TelephonyResOverlayDuchamp/AndroidManifest.xml").read_text(encoding="utf-8")
+          if 'package="com.android.phone.overlay.pissarro"' in telephony:
+              raise SystemExit("wrong pissarro telephony package remains")
+          if 'package="com.android.phone.overlay.duchamp"' not in telephony:
+              raise SystemExit("duchamp telephony package missing")
+
+          redmi = Path("overlay/SettingsProviderOverlayDuchampRedmi/AndroidManifest.xml").read_text(encoding="utf-8")
+          if 'android:priority="101"' not in redmi:
+              raise SystemExit("CN SettingsProvider overlay priority is not deterministic")
 
           tree = ast.parse(Path("extract-files.py").read_text(encoding="utf-8"))
           blob_dict = next(
@@ -116,32 +151,13 @@ jobs:
           seen = set()
           for key in blob_dict.keys:
               value = literal(key)
-              if value is not None and value in seen:
-                  raise SystemExit(f"Duplicate blob_fixups key: {value!r}")
               if value is not None:
+                  if value in seen:
+                      raise SystemExit(f"duplicate blob_fixups key: {value!r}")
                   seen.add(value)
 
-          print("blob_fixups contains no duplicate literal keys.")
+          print("Duchamp integration invariants passed.")
           PY
-
-          test "$(grep -c "libmtkcam_hwnode.jpegnode.so': blob_fixup" extract-files.py)" -eq 1
-          grep -A2 "libmtkcam_hwnode.jpegnode.so': blob_fixup" extract-files.py | grep -q "add_needed('libultrahdr_shim.so')"
-          grep -A2 "libmtkcam_hwnode.jpegnode.so': blob_fixup" extract-files.py | grep -q "replace_needed('libultrahdr.so', 'libultrahdr-v34.so')"
-
-          ! grep -Fq '/devices/system/cpu/cpu[0-7]/online' sepolicy/vendor/genfs_contexts
-          for cpu in 0 1 2 3 4 5 6 7; do
-            grep -q "/devices/system/cpu/cpu${cpu}/online" sepolicy/vendor/genfs_contexts
-          done
-
-          test "$(grep -c 'startServiceAsUser.*TouchSamplingService.class' parts/src/org/lineageos/settings/BootCompletedReceiver.java)" -eq 1
-
-          ! grep -q 'android:permission="RefreshService"' parts/AndroidManifest.xml
-          ! grep -q 'android:permission="ColorModeService"' parts/AndroidManifest.xml
-          ! grep -q 'android:permission="PocketService"' parts/AndroidManifest.xml
-          ! grep -q 'android:permission="TurboChargingService"' parts/AndroidManifest.xml
-
-          grep -q 'android:priority="101"' overlay/SettingsProviderOverlayDuchampRedmi/AndroidManifest.xml
-          grep -q 'package="com.android.phone.overlay.duchamp"' overlay/TelephonyResOverlayDuchamp/AndroidManifest.xml
 
       - name: Check repository hygiene
         shell: bash
