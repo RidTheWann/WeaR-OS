@@ -225,37 +225,57 @@ jobs:
       - name: Soong analysis
         shell: bash
         env:
+          BUILD_TYPE: ${{ inputs.build_type }}
           JOBS: ${{ inputs.jobs }}
         run: |
-          set -euo pipefail
+          set +u
+          source "$ANDROID_DIR/build/envsetup.sh"
           cd "$ANDROID_DIR"
+          lunch "wear_duchamp-${BUILD_TYPE}"
+          set -u
+          set -e
           m nothing -j"$JOBS"
 
       - name: SELinux policy
         shell: bash
         env:
+          BUILD_TYPE: ${{ inputs.build_type }}
           JOBS: ${{ inputs.jobs }}
         run: |
-          set -euo pipefail
+          set +u
+          source "$ANDROID_DIR/build/envsetup.sh"
           cd "$ANDROID_DIR"
+          lunch "wear_duchamp-${BUILD_TYPE}"
+          set -u
+          set -e
           m selinux_policy -j"$JOBS"
 
       - name: VINTF validation
         shell: bash
         env:
+          BUILD_TYPE: ${{ inputs.build_type }}
           JOBS: ${{ inputs.jobs }}
         run: |
-          set -euo pipefail
+          set +u
+          source "$ANDROID_DIR/build/envsetup.sh"
           cd "$ANDROID_DIR"
+          lunch "wear_duchamp-${BUILD_TYPE}"
+          set -u
+          set -e
           m check-vintf-all -j"$JOBS"
 
       - name: Build OTA
         shell: bash
         env:
+          BUILD_TYPE: ${{ inputs.build_type }}
           JOBS: ${{ inputs.jobs }}
         run: |
-          set -euo pipefail
+          set +u
+          source "$ANDROID_DIR/build/envsetup.sh"
           cd "$ANDROID_DIR"
+          lunch "wear_duchamp-${BUILD_TYPE}"
+          set -u
+          set -e
           mka bacon -j"$JOBS"
 
       - name: Collect artifacts
