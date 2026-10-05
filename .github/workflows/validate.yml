@@ -77,6 +77,43 @@ jobs:
           grep -q -F 'm selinux_policy' .github/workflows/rom-build.yml
           grep -q -F 'm check-vintf-all' .github/workflows/rom-build.yml
           grep -q -F 'mka bacon' .github/workflows/rom-build.yml
+
+          python3 - <<'PY'
+          from pathlib import Path
+
+          text = Path(".github/workflows/rom-build.yml").read_text(encoding="utf-8")
+          steps = {}
+          current = None
+          for line in text.splitlines():
+              if line.startswith("      - name: "):
+                  current = line[len("      - name: "): ]
+                  steps[current] = []
+              elif current is not None:
+                  steps[current].append(line)
+
+          required = {
+              "Soong analysis": "m nothing -j\"$JOBS\"",
+              "SELinux policy": "m selinux_policy -j\"$JOBS\"",
+              "VINTF validation": "m check-vintf-all -j\"$JOBS\"",
+              "Build OTA": "mka bacon -j\"$JOBS\"",
+          }
+          for name, command in required.items():
+              block = "\n".join(steps.get(name, []))
+              if not block:
+                  raise SystemExit(f"missing workflow step: {name}")
+              for snippet in (
+                  "BUILD_TYPE: ${{ inputs.build_type }}",
+                  'cd "$ANDROID_DIR"',
+                  'set +u',
+                  'source build/envsetup.sh',
+                  'lunch "wear_duchamp-${BUILD_TYPE}"',
+                  'set -u',
+                  command,
+              ):
+                  if snippet not in block:
+                      raise SystemExit(f"{name}: missing {snippet!r}")
+          print("ROM build shell reinitialization guards passed.")
+          PY
       - name: Validate duchamp integration invariants
         shell: bash
         run: |
